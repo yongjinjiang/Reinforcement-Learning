@@ -1,0 +1,49 @@
+<div class="slide-content">
+    <h3>Slide 1: Problem Formulation</h3>
+
+    <h4>Mathematical Setup</h4>
+    <ul>
+        <li><strong>K-armed bandit:</strong> K actions (arms) to choose from</li>
+        <li><strong>Each action a:</strong> Has a true value
+            <span class="math">q_*(a) = \mathbb{E}[R_t | A_t = a]</span>
+        </li>
+        <li><strong>Goal:</strong> Maximize total reward over T time steps</li>
+        <li><strong>Regret:</strong> The difference between optimal and actual performance</li>
+    </ul>
+
+    <div class="math-box">
+        <p><strong>Expected Regret:</strong></p>
+        <div class="math-display">
+            L_T = T \cdot \mathbb{E}[R | a^*] - \sum_{t=1}^{T} \mathbb{E}[R_t]
+        </div>
+        <p class="math-note">where <span class="math">a^*</span> is the optimal action</p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Action-Value Estimate:</strong></p>
+        <div class="math-display">
+            Q_t(a) = \frac{\text{sum of rewards when } a \text{ taken prior to } t}{\text{number of times } a \text{ taken prior to } t}
+        </div>
+        <div class="math-display">
+            Q_t(a) = \frac{\sum_{i=1}^{t-1} R_i \cdot \mathbb{1}_{A_i = a}}{\sum_{i=1}^{t-1} \mathbb{1}_{A_i = a}}
+        </div>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Question:</strong> Why is regret a better metric than just total reward?
+        </p>
+        <p>
+            <strong>Answer:</strong> Because regret normalizes performance against the optimal
+            strategy, making it easier to compare algorithms across different problem settings.
+            It measures the "cost of learning."
+        </p>
+        <p>
+            <strong>Key Insight:</strong> The regret <span class="math">L_T</span> grows with time, but
+            the <em>rate of growth</em> is what matters. Good algorithms achieve
+            <span class="math">O(\log T)</span> regret (logarithmic), while naive exploration
+            suffers <span class="math">O(T)</span> linear regret.
+        </p>
+    </div>
+</div>

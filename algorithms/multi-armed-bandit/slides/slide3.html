@@ -1,0 +1,105 @@
+<div class="slide-content">
+    <h3>Slide 3: Upper Confidence Bound (UCB)</h3>
+
+    <h4>Optimism Under Uncertainty</h4>
+    <p>
+        UCB adds an exploration bonus based on uncertainty. It's a <em>deterministic</em>
+        algorithm that achieves exploration through optimistic action selection.
+    </p>
+
+    <div class="algorithm-box">
+        <p><strong>UCB Action Selection:</strong></p>
+        <div class="math-display">
+            A_t = \arg\max_a \left[ Q_t(a) + c \sqrt{\frac{\ln t}{N_t(a)}} \right]
+        </div>
+        <p class="math-note">Choose action with highest upper confidence bound</p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Components Explained:</strong></p>
+        <ul>
+            <li>
+                <span class="math">Q_t(a)</span> - Estimated value (exploitation term)
+            </li>
+            <li>
+                <span class="math">c \sqrt{\frac{\ln t}{N_t(a)}}</span> - Uncertainty bonus (exploration term)
+            </li>
+            <li>
+                <span class="math">c > 0</span> - Exploration parameter (typically <span class="math">c = 2</span>)
+            </li>
+            <li>
+                <span class="math">N_t(a)</span> - Number of times action <span class="math">a</span> selected
+            </li>
+            <li>
+                <span class="math">t</span> - Current time step
+            </li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Why This Works - The Magic Formula:</strong></p>
+        <div class="math-display">
+            \text{Bonus} = c \sqrt{\frac{\ln t}{N_t(a)}}
+        </div>
+
+        <p class="math-note"><strong>Behavior analysis:</strong></p>
+        <ul>
+            <li>
+                As <span class="math">N_t(a) \uparrow</span> (action selected more)
+                → bonus <span class="math">\downarrow</span> (less exploration needed)
+            </li>
+            <li>
+                As <span class="math">t \uparrow</span> (time passes)
+                → bonus for unvisited actions <span class="math">\uparrow</span> (try everything eventually)
+            </li>
+            <li>
+                The <span class="math">\sqrt{\cdot}</span> ensures balance: not too aggressive, not too timid
+            </li>
+            <li>
+                The <span class="math">\ln t</span> term ensures logarithmic regret:
+                <span class="math">O(\log T)</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Regret Bound (Theoretical Guarantee):</strong></p>
+        <div class="math-display">
+            L_T \leq 8 \sum_{a: \Delta_a > 0} \frac{\ln T}{\Delta_a} + \left( 1 + \frac{\pi^2}{3} \right) \sum_{a=1}^{K} \Delta_a
+        </div>
+        <p class="math-note">
+            where <span class="math">\Delta_a = q_*(a^*) - q_*(a)</span> is the gap between
+            optimal and action <span class="math">a</span>
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Beautiful insight:</strong> UCB doesn't use randomness! It's deterministic
+            but achieves exploration through optimistic action selection - "be optimistic about
+            uncertain choices."
+        </p>
+        <p>
+            <strong>The <span class="math">\sqrt{\frac{\ln t}{N_t(a)}}</span> term:</strong>
+            This comes from the <em>Hoeffding inequality</em>, which bounds the probability
+            that a sample mean deviates from the true mean. It's a confidence interval!
+        </p>
+        <p>
+            <strong>Intuition from statistics:</strong> We're computing an upper confidence
+            bound on each action's true value. Actions we're uncertain about get higher bounds,
+            so we try them to reduce uncertainty.
+        </p>
+        <p>
+            <strong>Advantage over ε-greedy:</strong> UCB explores <em>intelligently</em> -
+            it focuses on uncertain actions rather than random exploration. This leads to
+            better theoretical guarantees (<span class="math">O(\log T)</span> vs
+            <span class="math">O(T)</span> regret).
+        </p>
+        <p>
+            <strong>Physics analogy:</strong> Like a particle exploring an energy landscape -
+            it preferentially explores high-energy (high-uncertainty) regions, but the
+            exploration decreases as it gathers information (entropy reduction).
+        </p>
+    </div>
+</div>

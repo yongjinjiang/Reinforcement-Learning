@@ -117,7 +117,7 @@
             <!-- Slide Navigation -->
             <div class="slide-nav">
                 <button id="prev-slide" onclick="changeSlide(-1)">← Previous</button>
-                <span id="slide-indicator">1 / 4</span>
+                <span id="slide-indicator">1 / 5</span>
                 <button id="next-slide" onclick="changeSlide(1)">Next →</button>
             </div>
         </section>
@@ -139,7 +139,11 @@
                     <p>Uses uncertainty estimates to guide exploration with theoretical guarantees</p>
                 </div>
                 <div class="takeaway-item">
-                    <h3>4. Foundation for RL</h3>
+                    <h3>4. Thompson Sampling is Elegant</h3>
+                    <p>Bayesian approach with no tunable parameters - exploration emerges naturally from uncertainty</p>
+                </div>
+                <div class="takeaway-item">
+                    <h3>5. Foundation for RL</h3>
                     <p>These concepts extend to full MDPs with state transitions and temporal credit assignment</p>
                 </div>
             </div>
@@ -162,12 +166,13 @@
     <!-- Slide Loading and Navigation Script -->
     <script>
         let currentSlide = 1;
-        const totalSlides = 4;
+        const totalSlides = 5;
         const slideFiles = [
             'slides/slide1.html',
             'slides/slide2.html',
             'slides/slide3.html',
-            'slides/slide4.html'
+            'slides/slide4.html',
+            'slides/slide5.html'
         ];
 
         // Load all slides

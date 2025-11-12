@@ -1,0 +1,383 @@
+<div class="slide-content">
+    <h3>Slide 5: Interactive Demo & Code</h3>
+
+    <h4>See the Algorithms in Action</h4>
+    <p>Run the code below to compare different strategies:</p>
+
+    <!-- PyScript Code Section -->
+    <div class="code-demo">
+        <h4>📝 Python Implementation</h4>
+        <div class="code-container">
+            <pre><code class="language-python" id="mab-code">import numpy as np
+from js import document
+
+# Multi-Armed Bandit Environment
+class Bandit:
+    """K-armed bandit with Gaussian rewards"""
+    def __init__(self, k_arms=10):
+        self.k = k_arms
+        # True action values sampled from N(0,1)
+        self.true_values = np.random.randn(k_arms)
+        self.optimal_action = np.argmax(self.true_values)
+
+    def pull(self, action):
+        """Return reward: N(q*(a), 1)"""
+        reward = np.random.randn() + self.true_values[action]
+        return reward
+
+
+# Epsilon-Greedy Agent
+class EpsilonGreedyAgent:
+    """ε-greedy action selection with incremental updates"""
+    def __init__(self, k_arms, epsilon=0.1, alpha=None):
+        self.k = k_arms
+        self.epsilon = epsilon
+        self.alpha = alpha  # If None, use sample average
+        self.Q = np.zeros(k_arms)
+        self.N = np.zeros(k_arms)
+
+    def select_action(self):
+        """Select action using ε-greedy policy"""
+        if np.random.random() < self.epsilon:
+            return np.random.randint(self.k)  # Explore
+        else:
+            return np.argmax(self.Q)  # Exploit
+
+    def update(self, action, reward):
+        """Update action value estimate"""
+        self.N[action] += 1
+        # Use sample average or constant step size
+        alpha = self.alpha if self.alpha else 1.0 / self.N[action]
+        self.Q[action] += alpha * (reward - self.Q[action])
+
+
+# UCB Agent
+class UCBAgent:
+    """Upper Confidence Bound action selection"""
+    def __init__(self, k_arms, c=2):
+        self.k = k_arms
+        self.c = c
+        self.Q = np.zeros(k_arms)
+        self.N = np.zeros(k_arms)
+        self.t = 0
+
+    def select_action(self):
+        """Select action with highest UCB"""
+        self.t += 1
+        # Try each action at least once
+        if 0 in self.N:
+            return np.where(self.N == 0)[0][0]
+
+        # UCB = Q(a) + c * sqrt(ln(t) / N(a))
+        ucb_values = self.Q + self.c * np.sqrt(np.log(self.t) / self.N)
+        return np.argmax(ucb_values)
+
+    def update(self, action, reward):
+        """Update action value estimate (sample average)"""
+        self.N[action] += 1
+        self.Q[action] += (reward - self.Q[action]) / self.N[action]
+
+
+# Thompson Sampling Agent (Beta-Bernoulli)
+class ThompsonSamplingAgent:
+    """Thompson Sampling with Beta-Bernoulli model"""
+    def __init__(self, k_arms, alpha0=1.0, beta0=1.0):
+        self.k = k_arms
+        # Beta distribution parameters (conjugate prior for Bernoulli)
+        self.alpha = np.ones(k_arms) * alpha0
+        self.beta = np.ones(k_arms) * beta0
+
+    def select_action(self):
+        """Sample from each arm's posterior and pick the best"""
+        # Sample theta from Beta(alpha, beta) for each arm
+        samples = np.random.beta(self.alpha, self.beta)
+        return np.argmax(samples)
+
+    def update(self, action, reward):
+        """Update posterior using Bayes rule"""
+        # For Bernoulli rewards (0 or 1)
+        # Convert Gaussian reward to binary for demo
+        binary_reward = 1 if reward > 0 else 0
+        self.alpha[action] += binary_reward
+        self.beta[action] += (1 - binary_reward)
+
+
+# Run experiment
+def run_experiment(steps=1000):
+    """Compare ε-greedy, UCB, and Thompson Sampling strategies"""
+    bandit = Bandit(k_arms=10)
+
+    # Initialize agents with different strategies
+    agents = {
+        'ε-greedy (ε=0.1)': EpsilonGreedyAgent(10, epsilon=0.1),
+        'ε-greedy (ε=0.01)': EpsilonGreedyAgent(10, epsilon=0.01),
+        'UCB (c=2)': UCBAgent(10, c=2),
+        'Thompson Sampling': ThompsonSamplingAgent(10)
+    }
+
+    # Track rewards for each agent
+    results = {name: [] for name in agents.keys()}
+    optimal_actions = {name: 0 for name in agents.keys()}
+
+    # Run simulation
+    for step in range(steps):
+        for name, agent in agents.items():
+            action = agent.select_action()
+            reward = bandit.pull(action)
+            agent.update(action, reward)
+            results[name].append(reward)
+            if action == bandit.optimal_action:
+                optimal_actions[name] += 1
+
+    # Calculate cumulative average rewards
+    avg_results = {
+        name: np.cumsum(rewards) / np.arange(1, len(rewards) + 1)
+        for name, rewards in results.items()
+    }
+
+    # Display results
+    output = "🎯 EXPERIMENT RESULTS (1000 steps)\\n"
+    output += "=" * 50 + "\\n\\n"
+
+    for name in agents.keys():
+        avg_reward = avg_results[name][-1]
+        optimal_pct = (optimal_actions[name] / steps) * 100
+        output += f"📊 {name}:\\n"
+        output += f"   Average Reward: {avg_reward:.3f}\\n"
+        output += f"   Optimal Action: {optimal_pct:.1f}%\\n\\n"
+
+    output += "=" * 50 + "\\n"
+    output += f"🎖️  Best Possible Reward: {bandit.true_values.max():.3f}\\n"
+    output += f"🎲 Number of Arms: {bandit.k}\\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+# Auto-run on page load
+run_experiment()
+</code></pre>
+        </div>
+
+        <div class="run-section">
+            <button id="run-code" onclick="runExperiment()">▶ Run Experiment</button>
+            <div id="output" class="output-box">Loading Python environment...</div>
+        </div>
+
+        <!--PyScript block - numpy loaded via py-config in index.html -->
+        <script type="py">
+from js import document
+print("📦 Loading modules...")
+
+# Numpy should be preloaded by py-config
+try:
+    import numpy as np
+    print("✅ NumPy loaded successfully!")
+except ImportError as e:
+    print(f"❌ NumPy not available: {e}")
+    document.getElementById("output").innerText = "Error: NumPy failed to load. Please refresh the page."
+
+# Multi-Armed Bandit Environment
+class Bandit:
+    """K-armed bandit with Gaussian rewards"""
+    def __init__(self, k_arms=10):
+        self.k = k_arms
+        # True action values sampled from N(0,1)
+        self.true_values = np.random.randn(k_arms)
+        self.optimal_action = np.argmax(self.true_values)
+
+    def pull(self, action):
+        """Return reward: N(q*(a), 1)"""
+        reward = np.random.randn() + self.true_values[action]
+        return reward
+
+
+# Epsilon-Greedy Agent
+class EpsilonGreedyAgent:
+    """ε-greedy action selection with incremental updates"""
+    def __init__(self, k_arms, epsilon=0.1, alpha=None):
+        self.k = k_arms
+        self.epsilon = epsilon
+        self.alpha = alpha  # If None, use sample average
+        self.Q = np.zeros(k_arms)
+        self.N = np.zeros(k_arms)
+
+    def select_action(self):
+        """Select action using ε-greedy policy"""
+        if np.random.random() < self.epsilon:
+            return np.random.randint(self.k)  # Explore
+        else:
+            return np.argmax(self.Q)  # Exploit
+
+    def update(self, action, reward):
+        """Update action value estimate"""
+        self.N[action] += 1
+        # Use sample average or constant step size
+        alpha = self.alpha if self.alpha else 1.0 / self.N[action]
+        self.Q[action] += alpha * (reward - self.Q[action])
+
+
+# UCB Agent
+class UCBAgent:
+    """Upper Confidence Bound action selection"""
+    def __init__(self, k_arms, c=2):
+        self.k = k_arms
+        self.c = c
+        self.Q = np.zeros(k_arms)
+        self.N = np.zeros(k_arms)
+        self.t = 0
+
+    def select_action(self):
+        """Select action with highest UCB"""
+        self.t += 1
+        # Try each action at least once
+        if 0 in self.N:
+            return np.where(self.N == 0)[0][0]
+
+        # UCB = Q(a) + c * sqrt(ln(t) / N(a))
+        ucb_values = self.Q + self.c * np.sqrt(np.log(self.t) / self.N)
+        return np.argmax(ucb_values)
+
+    def update(self, action, reward):
+        """Update action value estimate (sample average)"""
+        self.N[action] += 1
+        self.Q[action] += (reward - self.Q[action]) / self.N[action]
+
+
+# Thompson Sampling Agent (Beta-Bernoulli)
+class ThompsonSamplingAgent:
+    """Thompson Sampling with Beta-Bernoulli model"""
+    def __init__(self, k_arms, alpha0=1.0, beta0=1.0):
+        self.k = k_arms
+        # Beta distribution parameters (conjugate prior for Bernoulli)
+        self.alpha = np.ones(k_arms) * alpha0
+        self.beta = np.ones(k_arms) * beta0
+
+    def select_action(self):
+        """Sample from each arm's posterior and pick the best"""
+        # Sample theta from Beta(alpha, beta) for each arm
+        samples = np.random.beta(self.alpha, self.beta)
+        return np.argmax(samples)
+
+    def update(self, action, reward):
+        """Update posterior using Bayes rule"""
+        # For Bernoulli rewards (0 or 1)
+        # Convert Gaussian reward to binary for demo
+        binary_reward = 1 if reward > 0 else 0
+        self.alpha[action] += binary_reward
+        self.beta[action] += (1 - binary_reward)
+
+
+# Run experiment
+def run_experiment(steps=1000):
+    """Compare ε-greedy, UCB, and Thompson Sampling strategies"""
+    bandit = Bandit(k_arms=10)
+
+    # Initialize agents with different strategies
+    agents = {
+        'ε-greedy (ε=0.1)': EpsilonGreedyAgent(10, epsilon=0.1),
+        'ε-greedy (ε=0.01)': EpsilonGreedyAgent(10, epsilon=0.01),
+        'UCB (c=2)': UCBAgent(10, c=2),
+        'Thompson Sampling': ThompsonSamplingAgent(10)
+    }
+
+    # Track rewards for each agent
+    results = {name: [] for name in agents.keys()}
+    optimal_actions = {name: 0 for name in agents.keys()}
+
+    # Run simulation
+    for step in range(steps):
+        for name, agent in agents.items():
+            action = agent.select_action()
+            reward = bandit.pull(action)
+            agent.update(action, reward)
+            results[name].append(reward)
+            if action == bandit.optimal_action:
+                optimal_actions[name] += 1
+
+    # Calculate cumulative average rewards
+    avg_results = {
+        name: np.cumsum(rewards) / np.arange(1, len(rewards) + 1)
+        for name, rewards in results.items()
+    }
+
+    # Display results
+    output = "🎯 EXPERIMENT RESULTS (1000 steps)\\n"
+    output += "=" * 50 + "\\n\\n"
+
+    for name in agents.keys():
+        avg_reward = avg_results[name][-1]
+        optimal_pct = (optimal_actions[name] / steps) * 100
+        output += f"📊 {name}:\\n"
+        output += f"   Average Reward: {avg_reward:.3f}\\n"
+        output += f"   Optimal Action: {optimal_pct:.1f}%\\n\\n"
+
+    output += "=" * 50 + "\\n"
+    output += f"🎖️  Best Possible Reward: {bandit.true_values.max():.3f}\\n"
+    output += f"🎲 Number of Arms: {bandit.k}\\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+# Run experiment on load
+print("🎯 Running initial experiment...")
+try:
+    run_experiment()
+    print("✅ Ready! Click 'Run Experiment' button to run again with new random seed.")
+except Exception as e:
+    document.getElementById("output").innerText = f"Error: {str(e)}"
+    print(f"❌ Error: {e}")
+
+# Expose function to JavaScript
+from pyodide.ffi import create_proxy
+from js import window
+
+# Create a JavaScript-callable version of run_experiment
+js_run_experiment = create_proxy(run_experiment)
+window.runPythonExperiment = js_run_experiment
+
+print("✨ Function exposed to JavaScript as window.runPythonExperiment")
+        </script>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Expected Performance:</strong></p>
+        <div class="math-display">
+            \mathbb{E}[\text{Average Reward}] \approx q_*(a^*) - \frac{\varepsilon}{2} \cdot \frac{1}{K} \sum_{a} \Delta_a
+        </div>
+        <p class="math-note">
+            For ε-greedy: higher <span class="math">\varepsilon</span> → more exploration → lower asymptotic performance
+        </p>
+        <p class="math-note">
+            For UCB and Thompson Sampling: Theoretical guarantee of <span class="math">O(\log T)</span> regret!
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🔬 Experiment & Learn</h4>
+        <p>
+            <strong>Try modifying the code above!</strong> Edit the parameters and click "Run Experiment".
+        </p>
+        <p>
+            <strong>Things to experiment with:</strong>
+        </p>
+        <ul>
+            <li>What happens with <span class="math">\varepsilon = 0</span> (pure exploitation)?</li>
+            <li>What happens with <span class="math">\varepsilon = 0.5</span> (too much exploration)?</li>
+            <li>How does UCB with <span class="math">c = 1</span> vs <span class="math">c = 3</span> compare?</li>
+            <li>What if you increase <code>k_arms</code> to 20 or 50?</li>
+            <li>Try adding a <em>decaying epsilon</em>: <code>epsilon = 1.0 / (step + 1)</code></li>
+            <li>How does Thompson Sampling compare to UCB in terms of optimal action %?</li>
+        </ul>
+        <p>
+            <strong>Observation:</strong> UCB and Thompson Sampling typically find the optimal action more frequently
+            (higher optimal action %) because they explore intelligently rather than randomly.
+        </p>
+        <p>
+            <strong>Real-world application:</strong> This is how A/B testing platforms decide
+            which website variant to show users - balancing learning which is best (exploration)
+            with showing the current best (exploitation)!
+        </p>
+    </div>
+</div>

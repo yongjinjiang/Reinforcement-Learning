@@ -62,6 +62,59 @@
             observations have more "momentum" in shaping our estimates. The step size
             <span class="math">\alpha</span> acts like a damping coefficient.
         </p>
+
+        <p>
+            <strong>Q: Why does the "Incremental Update Rule" have a tunable α parameter while the "Action-Value Estimate" has none?</strong>
+        </p>
+        <p>
+            <strong>A:</strong> These represent two different approaches to averaging rewards:
+        </p>
+        <ul>
+            <li>
+                <strong>Sample Average Method</strong> (from Slide 1): No tunable parameters.
+                Computes the true average: <span class="math">Q_t(a) = \frac{\text{sum of rewards}}{\text{count}}</span>.
+                All past rewards are weighted equally.
+            </li>
+            <li>
+                <strong>Incremental Update with constant α</strong>: Creates an <em>exponentially weighted average</em>
+                where recent rewards have more influence. Older rewards exponentially decay by factor <span class="math">(1-\alpha)</span>.
+            </li>
+        </ul>
+
+        <p>
+            <strong>The Connection:</strong> The incremental rule can represent BOTH approaches:
+        </p>
+        <ul>
+            <li>
+                When <span class="math">\alpha = \frac{1}{N_t(a)}</span> (decreasing step size),
+                the incremental rule is equivalent to the sample average method
+            </li>
+            <li>
+                When <span class="math">\alpha</span> is constant (e.g., 0.1),
+                you get an exponentially weighted average that "forgets" old observations
+            </li>
+        </ul>
+
+        <p>
+            <strong>When to use constant α vs sample average:</strong>
+        </p>
+        <ul>
+            <li>
+                <strong>Constant α:</strong> Better for <em>non-stationary</em> environments
+                where reward distributions change over time. Allows adaptation by giving more weight to recent data.
+            </li>
+            <li>
+                <strong>Sample average (α = 1/N):</strong> Better for <em>stationary</em> environments
+                where true means are fixed. Converges to the true expected value.
+            </li>
+        </ul>
+
+        <p>
+            <strong>α trade-off:</strong> Small <span class="math">\alpha</span> (e.g., 0.01) = slow learning,
+            stable estimates. Large <span class="math">\alpha</span> (e.g., 0.5) = fast adaptation,
+            noisy estimates.
+        </p>
+
         <p>
             <strong>ε trade-off:</strong> Large <span class="math">\varepsilon</span> (e.g., 0.1)
             explores more but exploits less. Small <span class="math">\varepsilon</span> (e.g., 0.01)

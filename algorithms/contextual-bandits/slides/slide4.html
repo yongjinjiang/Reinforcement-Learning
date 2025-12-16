@@ -1,0 +1,162 @@
+<div class="slide-content">
+    <h3>Slide 4: Comparison & Real-World Applications</h3>
+
+    <h4>LinUCB vs LinTS: Side-by-Side Comparison</h4>
+
+    <div class="math-box">
+        <p><strong>Algorithm Comparison:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+            <tr style="border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 0.5rem; text-align: left; color: var(--primary-color);">Aspect</th>
+                <th style="padding: 0.5rem; text-align: left; color: var(--primary-color);">LinUCB</th>
+                <th style="padding: 0.5rem; text-align: left; color: var(--primary-color);">LinTS</th>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Approach</strong></td>
+                <td style="padding: 0.5rem;">Frequentist (optimism)</td>
+                <td style="padding: 0.5rem;">Bayesian (posterior sampling)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Selection</strong></td>
+                <td style="padding: 0.5rem;">Deterministic (argmax UCB)</td>
+                <td style="padding: 0.5rem;">Stochastic (sample then argmax)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Parameters</strong></td>
+                <td style="padding: 0.5rem;">Requires tuning α</td>
+                <td style="padding: 0.5rem;">Parameter-free (ν often = 1)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Regret Bound</strong></td>
+                <td style="padding: 0.5rem;"><span class="math">\tilde{O}(d\sqrt{T})</span></td>
+                <td style="padding: 0.5rem;"><span class="math">\tilde{O}(d\sqrt{T})</span></td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Empirical Performance</strong></td>
+                <td style="padding: 0.5rem;">Good, needs tuning</td>
+                <td style="padding: 0.5rem;">Often better, adaptive</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><strong>Computation</strong></td>
+                <td style="padding: 0.5rem;"><span class="math">O(Kd^2)</span> per step</td>
+                <td style="padding: 0.5rem;"><span class="math">O(Kd^2)</span> per step + sampling</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="math-box">
+        <p><strong>When to Use Which Algorithm:</strong></p>
+        <ul>
+            <li>
+                <strong>Use LinUCB when:</strong>
+                <ul>
+                    <li>You want deterministic, reproducible behavior</li>
+                    <li>Theoretical guarantees are critical</li>
+                    <li>You have resources to tune the exploration parameter α</li>
+                    <li>Your application domain is well-understood</li>
+                </ul>
+            </li>
+            <li>
+                <strong>Use LinTS when:</strong>
+                <ul>
+                    <li>You want a simple, parameter-free solution</li>
+                    <li>Empirical performance is more important than theory</li>
+                    <li>You prefer a Bayesian, probabilistic approach</li>
+                    <li>You're in a new domain and want adaptive exploration</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>Real-World Applications:</strong></p>
+
+        <h4>1. Personalized Recommendations</h4>
+        <ul>
+            <li><strong>Context:</strong> User demographics, browsing history, time of day</li>
+            <li><strong>Actions:</strong> Movies, products, articles to recommend</li>
+            <li><strong>Reward:</strong> Click-through rate, watch time, purchase</li>
+            <li><strong>Why it works:</strong> Generalizes across similar users</li>
+        </ul>
+
+        <h4>2. Online Advertising</h4>
+        <ul>
+            <li><strong>Context:</strong> User profile, webpage content, search query</li>
+            <li><strong>Actions:</strong> Which ad to display</li>
+            <li><strong>Reward:</strong> Click (1) or no click (0)</li>
+            <li><strong>Real deployment:</strong> Yahoo!, Microsoft, Google use LinUCB/LinTS</li>
+        </ul>
+
+        <h4>3. Clinical Trials (Precision Medicine)</h4>
+        <ul>
+            <li><strong>Context:</strong> Patient age, genetics, medical history</li>
+            <li><strong>Actions:</strong> Treatment options</li>
+            <li><strong>Reward:</strong> Patient outcome (recovery, side effects)</li>
+            <li><strong>Ethical advantage:</strong> Adapts to give better treatments over time</li>
+        </ul>
+
+        <h4>4. Dynamic Pricing</h4>
+        <ul>
+            <li><strong>Context:</strong> Demand, inventory, competitor prices, customer segment</li>
+            <li><strong>Actions:</strong> Price points to offer</li>
+            <li><strong>Reward:</strong> Revenue or profit</li>
+            <li><strong>Benefit:</strong> Real-time adaptation to market conditions</li>
+        </ul>
+
+        <h4>5. Adaptive User Interfaces</h4>
+        <ul>
+            <li><strong>Context:</strong> User behavior, device type, task</li>
+            <li><strong>Actions:</strong> UI layouts, feature placements</li>
+            <li><strong>Reward:</strong> Engagement, task completion time</li>
+            <li><strong>Example:</strong> A/B testing with automatic winner selection</li>
+        </ul>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+
+        <p>
+            <strong>Why contextual bandits are everywhere:</strong> They're the sweet spot between
+            supervised learning (requires labeled data for all actions) and full reinforcement learning
+            (requires modeling complex state transitions). Many real-world problems fit this framework!
+        </p>
+
+        <p>
+            <strong>The power of generalization:</strong> In classical bandits, learning about action
+            <span class="math">a</span> tells us nothing about action <span class="math">b</span>.
+            With contextual bandits, similar contexts lead to similar rewards, enabling efficient learning.
+        </p>
+
+        <p>
+            <strong>Historical success story:</strong> In 2010, Yahoo! published a landmark paper showing
+            LinUCB increased click-through rates by 12.5% on their news article recommendations compared
+            to non-contextual methods. This launched widespread adoption in industry.
+        </p>
+
+        <p>
+            <strong>Ethical considerations:</strong> Contextual bandits can be more ethical than A/B testing
+            because they adapt quickly - if one treatment is clearly better, the algorithm naturally shifts
+            to it instead of running a 50-50 split for weeks.
+        </p>
+
+        <p>
+            <strong>Feature engineering matters:</strong> The quality of context features
+            <span class="math">\mathbf{x}_t</span> determines performance. Good features should:
+        </p>
+        <ul>
+            <li>Be relevant to the reward (predictive power)</li>
+            <li>Capture user/item diversity (generalization)</li>
+            <li>Be normalized (similar scales)</li>
+            <li>Include interactions if appropriate (e.g., user-item cross-features)</li>
+        </ul>
+
+        <p>
+            <strong>Beyond linearity:</strong> If rewards are non-linear in features, we can:
+        </p>
+        <ul>
+            <li>Use kernel methods (kernel ridge regression with LinUCB)</li>
+            <li>Use neural networks (neural contextual bandits)</li>
+            <li>Apply feature transformations (polynomials, RBF)</li>
+        </ul>
+    </div>
+</div>

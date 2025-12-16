@@ -1,0 +1,87 @@
+<div class="slide-content">
+    <h3>Slide 1: Problem Formulation</h3>
+
+    <h4>From Multi-Armed Bandits to Contextual Bandits</h4>
+    <ul>
+        <li><strong>Multi-Armed Bandit:</strong> Choose action <span class="math">a</span>, receive reward <span class="math">r</span></li>
+        <li><strong>Contextual Bandit:</strong> Observe context <span class="math">\mathbf{x}_t</span>, choose action <span class="math">a_t</span>, receive reward <span class="math">r_t</span></li>
+        <li><strong>Key difference:</strong> Optimal action depends on the context</li>
+    </ul>
+
+    <div class="math-box">
+        <p><strong>Contextual Bandit Protocol:</strong></p>
+        <p class="math-note">For each round <span class="math">t = 1, 2, \ldots, T</span>:</p>
+        <ol>
+            <li>Environment reveals context <span class="math">\mathbf{x}_t \in \mathbb{R}^d</span></li>
+            <li>Agent selects action <span class="math">a_t \in \{1, 2, \ldots, K\}</span></li>
+            <li>Environment reveals reward <span class="math">r_t \in \mathbb{R}</span></li>
+            <li>Agent updates its model</li>
+        </ol>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Linear Reward Model:</strong></p>
+        <p class="math-note">We assume rewards are a linear function of context:</p>
+        <div class="math-display">
+            r_{t,a} = \mathbf{x}_t^\top \boldsymbol{\theta}_a^* + \epsilon_t
+        </div>
+        <p class="math-note">where:</p>
+        <ul>
+            <li><span class="math">\mathbf{x}_t \in \mathbb{R}^d</span> - context vector (features)</li>
+            <li><span class="math">\boldsymbol{\theta}_a^* \in \mathbb{R}^d</span> - unknown parameter vector for action <span class="math">a</span></li>
+            <li><span class="math">\epsilon_t</span> - noise term (often assumed <span class="math">\mathcal{N}(0, \sigma^2)</span>)</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Expected Reward:</strong></p>
+        <div class="math-display">
+            \mathbb{E}[r_{t,a} | \mathbf{x}_t] = \mathbf{x}_t^\top \boldsymbol{\theta}_a^*
+        </div>
+        <p class="math-note">
+            The optimal action at time <span class="math">t</span> is:
+        </p>
+        <div class="math-display">
+            a_t^* = \arg\max_{a \in \{1, \ldots, K\}} \mathbf{x}_t^\top \boldsymbol{\theta}_a^*
+        </div>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Regret Definition:</strong></p>
+        <div class="math-display">
+            R_T = \sum_{t=1}^T \left( \mathbf{x}_t^\top \boldsymbol{\theta}_{a_t^*}^* - \mathbf{x}_t^\top \boldsymbol{\theta}_{a_t}^* \right)
+        </div>
+        <p class="math-note">
+            Goal: Minimize cumulative regret over <span class="math">T</span> rounds
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why linear models?</strong> Linear models are simple, interpretable, and
+            computationally efficient. They work surprisingly well in practice, especially with
+            good feature engineering. For non-linear relationships, we can use feature transformations
+            (polynomials, RBF kernels, etc.).
+        </p>
+        <p>
+            <strong>Real-world example:</strong> In online advertising:
+        </p>
+        <ul>
+            <li><span class="math">\mathbf{x}_t</span> = user features (age, location, browsing history)</li>
+            <li><span class="math">a_t</span> = which ad to show</li>
+            <li><span class="math">r_t</span> = 1 if user clicks, 0 otherwise</li>
+            <li><span class="math">\boldsymbol{\theta}_a^*</span> = learned preferences for ad <span class="math">a</span></li>
+        </ul>
+        <p>
+            <strong>Key insight:</strong> With contextual bandits, we can <em>generalize</em> across
+            similar contexts. If two users have similar features, we expect similar responses. This
+            enables data-efficient learning compared to treating each context as a separate bandit.
+        </p>
+        <p>
+            <strong>Connection to supervised learning:</strong> Contextual bandits are like online
+            regression, but we only observe rewards for actions we actually took (partial feedback),
+            not for all actions (full supervision).
+        </p>
+    </div>
+</div>

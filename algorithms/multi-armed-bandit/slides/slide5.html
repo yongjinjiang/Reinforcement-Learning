@@ -135,20 +135,25 @@ def run_experiment(steps=1000):
         for name, rewards in results.items()
     }
 
-    # Display results
-    output = "🎯 EXPERIMENT RESULTS (1000 steps)\\n"
-    output += "=" * 50 + "\\n\\n"
+    # Display results in compact format
+    output = "RESULTS\\n" + "-" * 35 + "\\n"
+
+    # Shorten algorithm names for display
+    display_names = {
+        'ε-greedy (ε=0.1)': 'ε-greedy(0.1)',
+        'ε-greedy (ε=0.01)': 'ε-greedy(0.01)',
+        'UCB (c=2)': 'UCB',
+        'Thompson Sampling': 'Thompson'
+    }
 
     for name in agents.keys():
         avg_reward = avg_results[name][-1]
         optimal_pct = (optimal_actions[name] / steps) * 100
-        output += f"📊 {name}:\\n"
-        output += f"   Average Reward: {avg_reward:.3f}\\n"
-        output += f"   Optimal Action: {optimal_pct:.1f}%\\n\\n"
+        short_name = display_names.get(name, name)
+        output += f"{short_name:14s} {avg_reward:5.3f} {optimal_pct:5.1f}%%\\n"
 
-    output += "=" * 50 + "\\n"
-    output += f"🎖️  Best Possible Reward: {bandit.true_values.max():.3f}\\n"
-    output += f"🎲 Number of Arms: {bandit.k}\\n"
+    output += "-" * 35 + "\\n"
+    output += f"Best possible: {bandit.true_values.max():.3f}\\n"
 
     document.getElementById("output").innerText = output
     print("✅ Experiment completed!")
@@ -301,20 +306,25 @@ def run_experiment(steps=1000):
         for name, rewards in results.items()
     }
 
-    # Display results
-    output = "🎯 EXPERIMENT RESULTS (1000 steps)\\n"
-    output += "=" * 50 + "\\n\\n"
+    # Display results in compact format
+    output = "RESULTS\\n" + "-" * 35 + "\\n"
+
+    # Shorten algorithm names for display
+    display_names = {
+        'ε-greedy (ε=0.1)': 'ε-greedy(0.1)',
+        'ε-greedy (ε=0.01)': 'ε-greedy(0.01)',
+        'UCB (c=2)': 'UCB',
+        'Thompson Sampling': 'Thompson'
+    }
 
     for name in agents.keys():
         avg_reward = avg_results[name][-1]
         optimal_pct = (optimal_actions[name] / steps) * 100
-        output += f"📊 {name}:\\n"
-        output += f"   Average Reward: {avg_reward:.3f}\\n"
-        output += f"   Optimal Action: {optimal_pct:.1f}%\\n\\n"
+        short_name = display_names.get(name, name)
+        output += f"{short_name:14s} {avg_reward:5.3f} {optimal_pct:5.1f}%%\\n"
 
-    output += "=" * 50 + "\\n"
-    output += f"🎖️  Best Possible Reward: {bandit.true_values.max():.3f}\\n"
-    output += f"🎲 Number of Arms: {bandit.k}\\n"
+    output += "-" * 35 + "\\n"
+    output += f"Best possible: {bandit.true_values.max():.3f}\\n"
 
     document.getElementById("output").innerText = output
     print("✅ Experiment completed!")

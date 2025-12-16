@@ -1,0 +1,142 @@
+<div class="slide-content">
+    <h3>Slide 3: Linear Thompson Sampling (LinTS)</h3>
+
+    <h4>Bayesian Approach to Contextual Bandits</h4>
+    <p>
+        LinTS extends Thompson Sampling to the contextual setting using a <em>Bayesian linear regression</em>
+        model. Instead of computing confidence bounds, it samples parameters from the posterior distribution.
+    </p>
+
+    <div class="algorithm-box">
+        <p><strong>LinTS Algorithm:</strong></p>
+        <p class="math-note">For each action <span class="math">a \in \{1, \ldots, K\}</span>, maintain:</p>
+        <ul>
+            <li><span class="math">\mathbf{A}_a = \mathbf{I}_d + \sum_{t: a_t=a} \mathbf{x}_t \mathbf{x}_t^\top</span> - precision matrix</li>
+            <li><span class="math">\mathbf{b}_a = \sum_{t: a_t=a} r_t \mathbf{x}_t</span> - weighted sum of rewards</li>
+        </ul>
+
+        <p class="math-note">At each round <span class="math">t</span>:</p>
+        <ol>
+            <li>Observe context <span class="math">\mathbf{x}_t</span></li>
+            <li>For each action <span class="math">a</span>:
+                <ul>
+                    <li>Compute mean: <span class="math">\hat{\boldsymbol{\theta}}_a = \mathbf{A}_a^{-1} \mathbf{b}_a</span></li>
+                    <li>Compute covariance: <span class="math">\boldsymbol{\Sigma}_a = \nu^2 \mathbf{A}_a^{-1}</span></li>
+                    <li>Sample: <span class="math">\tilde{\boldsymbol{\theta}}_a \sim \mathcal{N}(\hat{\boldsymbol{\theta}}_a, \boldsymbol{\Sigma}_a)</span></li>
+                    <li>Compute expected reward: <span class="math">\mu_a = \mathbf{x}_t^\top \tilde{\boldsymbol{\theta}}_a</span></li>
+                </ul>
+            </li>
+            <li>Select action <span class="math">a_t = \arg\max_a \mu_a</span></li>
+            <li>Observe reward <span class="math">r_t</span></li>
+            <li>Update <span class="math">\mathbf{A}_{a_t} \leftarrow \mathbf{A}_{a_t} + \mathbf{x}_t \mathbf{x}_t^\top</span></li>
+            <li>Update <span class="math">\mathbf{b}_{a_t} \leftarrow \mathbf{b}_{a_t} + r_t \mathbf{x}_t</span></li>
+        </ol>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Bayesian Linear Regression Model:</strong></p>
+        <p class="math-note">Assume Gaussian likelihood and prior:</p>
+        <div class="math-display">
+            r_t | \boldsymbol{\theta}_a, \mathbf{x}_t \sim \mathcal{N}(\mathbf{x}_t^\top \boldsymbol{\theta}_a, \nu^2)
+        </div>
+        <div class="math-display">
+            \boldsymbol{\theta}_a \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_d)
+        </div>
+
+        <p class="math-note">The posterior distribution is also Gaussian (conjugate prior):</p>
+        <div class="math-display">
+            \boldsymbol{\theta}_a | \text{data} \sim \mathcal{N}(\hat{\boldsymbol{\theta}}_a, \nu^2 \mathbf{A}_a^{-1})
+        </div>
+        <p class="math-note">where <span class="math">\nu^2</span> is the noise variance (often set to 1)</p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Posterior Mean and Covariance:</strong></p>
+        <div class="math-display">
+            \hat{\boldsymbol{\theta}}_a = \mathbf{A}_a^{-1} \mathbf{b}_a
+        </div>
+        <div class="math-display">
+            \boldsymbol{\Sigma}_a = \nu^2 \mathbf{A}_a^{-1}
+        </div>
+        <p class="math-note">
+            Same mean as LinUCB! The difference is in how we use uncertainty:
+        </p>
+        <ul>
+            <li><strong>LinUCB:</strong> Adds confidence bound deterministically</li>
+            <li><strong>LinTS:</strong> Samples from the posterior probabilistically</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Probability Matching:</strong></p>
+        <div class="math-display">
+            P(a_t = a | \text{history}) \approx P(a \text{ is optimal} | \text{history})
+        </div>
+        <p class="math-note">
+            LinTS naturally matches the probability of selecting each action to the probability
+            that it's optimal given the observed data. This is optimal in a Bayesian sense!
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+
+        <p>
+            <strong>Why LinTS is elegant:</strong> Like Thompson Sampling for bandits, LinTS has
+            <em>no tunable parameters</em> (besides the noise variance <span class="math">\nu</span>,
+            which can often be set to 1). Exploration happens naturally through posterior sampling.
+        </p>
+
+        <p>
+            <strong>Intuition:</strong> When we're uncertain about <span class="math">\boldsymbol{\theta}_a</span>
+            (few observations), the posterior has high variance. Sampling from it can produce diverse values,
+            leading to exploration. As we gather data, the posterior concentrates, reducing exploration.
+        </p>
+
+        <p>
+            <strong>Efficient sampling:</strong> To sample <span class="math">\tilde{\boldsymbol{\theta}}_a \sim \mathcal{N}(\hat{\boldsymbol{\theta}}_a, \nu^2 \mathbf{A}_a^{-1})</span>,
+            we can use:
+        </p>
+        <div class="math-display">
+            \tilde{\boldsymbol{\theta}}_a = \hat{\boldsymbol{\theta}}_a + \nu \mathbf{A}_a^{-1/2} \mathbf{z}
+        </div>
+        <p class="math-note">
+            where <span class="math">\mathbf{z} \sim \mathcal{N}(\mathbf{0}, \mathbf{I}_d)</span> is a standard normal vector.
+        </p>
+
+        <p>
+            <strong>Computational trick:</strong> For efficiency, we can compute <span class="math">\mathbf{A}_a^{-1/2}</span>
+            using Cholesky decomposition: <span class="math">\mathbf{A}_a = \mathbf{L}_a \mathbf{L}_a^\top</span>,
+            then <span class="math">\mathbf{A}_a^{-1/2} = \mathbf{L}_a^{-\top}</span>.
+        </p>
+
+        <p>
+            <strong>LinTS vs LinUCB:</strong>
+        </p>
+        <ul>
+            <li>
+                <strong>LinTS:</strong> Parameter-free, Bayesian, often better empirical performance,
+                naturally handles uncertainty
+            </li>
+            <li>
+                <strong>LinUCB:</strong> Requires tuning <span class="math">\alpha</span>, frequentist,
+                deterministic, stronger theoretical guarantees
+            </li>
+            <li>
+                Both achieve <span class="math">\tilde{O}(d\sqrt{T})</span> regret!
+            </li>
+        </ul>
+
+        <p>
+            <strong>Practical consideration:</strong> LinTS typically outperforms LinUCB in practice
+            because it explores more efficiently. The probabilistic sampling naturally adapts to the
+            uncertainty without needing to tune an exploration parameter.
+        </p>
+
+        <p>
+            <strong>Extension to other priors:</strong> The Gaussian prior is conjugate to the Gaussian
+            likelihood, making updates exact and efficient. For non-Gaussian rewards (e.g., binary),
+            we can use approximations like Laplace approximation or variational inference.
+        </p>
+    </div>
+</div>

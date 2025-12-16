@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-Armed Bandit | RL Journey</title>
+    <title>Contextual Bandits | RL Journey</title>
 
     <!-- Styles -->
     <link rel="stylesheet" href="../../css/styles.css">
@@ -85,23 +85,26 @@
             <nav class="breadcrumb">
                 <a href="../../index.html">← Back to Home</a>
             </nav>
-            <h1>🎰 Multi-Armed Bandit</h1>
-            <p class="subtitle">The Exploration-Exploitation Dilemma</p>
+            <h1>🎯 Contextual Bandits</h1>
+            <p class="subtitle">Linear Models for Context-Aware Decision Making</p>
         </div>
     </header>
 
     <main class="container">
         <!-- Introduction -->
         <section class="algorithm-intro">
-            <h2>💡 What is the Multi-Armed Bandit Problem?</h2>
+            <h2>💡 What are Contextual Bandits?</h2>
             <p>
-                Imagine you're in a casino with multiple slot machines (one-armed bandits),
-                each with different unknown payout probabilities. You have a limited budget.
-                How do you maximize your total reward?
+                Contextual bandits extend the multi-armed bandit problem by incorporating
+                <strong>context</strong> (features) into the decision-making process. Instead of
+                choosing the same best action every time, the optimal action depends on the
+                current situation.
             </p>
             <div class="key-insight">
-                <strong>The Core Challenge:</strong> Balance between <em>exploring</em> new machines
-                to find better options and <em>exploiting</em> the best machine you've found so far.
+                <strong>The Key Extension:</strong> At each time step, we observe a <em>context vector</em>
+                (e.g., user features, time of day, product attributes) and choose an action based on
+                both the context and our learned model. This enables <em>personalization</em> and
+                <em>generalization</em> across similar contexts.
             </div>
         </section>
 
@@ -127,24 +130,24 @@
             <h2>🎯 Key Takeaways</h2>
             <div class="takeaway-grid">
                 <div class="takeaway-item">
-                    <h3>1. Exploration-Exploitation Tradeoff</h3>
-                    <p>The fundamental challenge in RL: gathering information vs. using it optimally</p>
+                    <h3>1. Context Matters</h3>
+                    <p>Contextual bandits enable personalized decisions by incorporating features of the current situation</p>
                 </div>
                 <div class="takeaway-item">
-                    <h3>2. Simple Strategies Work</h3>
-                    <p>ε-greedy is easy to implement and often performs well in practice</p>
+                    <h3>2. Linear Models Work Well</h3>
+                    <p>LinUCB and LinTS use linear regression to model reward as a function of context</p>
                 </div>
                 <div class="takeaway-item">
-                    <h3>3. UCB is Principled</h3>
-                    <p>Uses uncertainty estimates to guide exploration with theoretical guarantees</p>
+                    <h3>3. Confidence-Based Exploration</h3>
+                    <p>LinUCB uses ridge regression confidence bounds; LinTS uses Bayesian posterior sampling</p>
                 </div>
                 <div class="takeaway-item">
-                    <h3>4. Thompson Sampling is Elegant</h3>
-                    <p>Bayesian approach with no tunable parameters - exploration emerges naturally from uncertainty</p>
+                    <h3>4. Real-World Applications</h3>
+                    <p>Powers recommendation systems, ad placement, personalized medicine, and more</p>
                 </div>
                 <div class="takeaway-item">
-                    <h3>5. Foundation for RL</h3>
-                    <p>These concepts extend to full MDPs with state transitions and temporal credit assignment</p>
+                    <h3>5. Bridge to Full RL</h3>
+                    <p>Contextual bandits are one step closer to full reinforcement learning with state transitions</p>
                 </div>
             </div>
         </section>
@@ -318,17 +321,26 @@
 
         // Global function to run Python experiment
         window.runExperiment = function() {
+            console.log('🔘 runExperiment called');
+            console.log('🔍 window.runPythonExperiment exists?', typeof window.runPythonExperiment);
+
             if (window.runPythonExperiment) {
                 try {
+                    console.log('✅ Calling window.runPythonExperiment()...');
                     window.runPythonExperiment();
                 } catch (e) {
-                    console.error('Error:', e);
-                    document.getElementById('output').innerText =
-                        'Error running experiment. Check console.';
+                    console.error('❌ Error calling runPythonExperiment:', e);
+                    const outputEl = document.getElementById('output');
+                    if (outputEl) {
+                        outputEl.innerText = 'Error running experiment. Check console: ' + e.message;
+                    }
                 }
             } else {
-                document.getElementById('output').innerText =
-                    'Python not ready yet. Please wait a moment and try again.';
+                console.warn('⚠️ window.runPythonExperiment not found');
+                const outputEl = document.getElementById('output');
+                if (outputEl) {
+                    outputEl.innerText = 'Python not ready yet. Please wait a moment and try again.';
+                }
             }
         };
     </script>

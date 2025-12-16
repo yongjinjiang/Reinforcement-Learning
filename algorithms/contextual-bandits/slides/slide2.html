@@ -1,0 +1,108 @@
+<div class="slide-content">
+    <h3>Slide 2: LinUCB Algorithm</h3>
+
+    <h4>Linear Upper Confidence Bound</h4>
+    <p>
+        LinUCB extends UCB to the contextual setting using <em>ridge regression</em> to estimate
+        parameters and confidence bounds for exploration.
+    </p>
+
+    <div class="algorithm-box">
+        <p><strong>LinUCB Algorithm:</strong></p>
+        <p class="math-note">For each action <span class="math">a \in \{1, \ldots, K\}</span>, maintain:</p>
+        <ul>
+            <li><span class="math">\mathbf{A}_a = \mathbf{I}_d + \sum_{t: a_t=a} \mathbf{x}_t \mathbf{x}_t^\top</span> - design matrix</li>
+            <li><span class="math">\mathbf{b}_a = \sum_{t: a_t=a} r_t \mathbf{x}_t</span> - reward vector</li>
+        </ul>
+
+        <p class="math-note">At each round <span class="math">t</span>:</p>
+        <ol>
+            <li>Observe context <span class="math">\mathbf{x}_t</span></li>
+            <li>For each action <span class="math">a</span>, compute:
+                <div class="math-display">
+                    \hat{\boldsymbol{\theta}}_a = \mathbf{A}_a^{-1} \mathbf{b}_a
+                </div>
+                <div class="math-display">
+                    \text{UCB}_a = \mathbf{x}_t^\top \hat{\boldsymbol{\theta}}_a + \alpha \sqrt{\mathbf{x}_t^\top \mathbf{A}_a^{-1} \mathbf{x}_t}
+                </div>
+            </li>
+            <li>Select action <span class="math">a_t = \arg\max_a \text{UCB}_a</span></li>
+            <li>Observe reward <span class="math">r_t</span></li>
+            <li>Update <span class="math">\mathbf{A}_{a_t} \leftarrow \mathbf{A}_{a_t} + \mathbf{x}_t \mathbf{x}_t^\top</span></li>
+            <li>Update <span class="math">\mathbf{b}_{a_t} \leftarrow \mathbf{b}_{a_t} + r_t \mathbf{x}_t</span></li>
+        </ol>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Ridge Regression Estimator:</strong></p>
+        <div class="math-display">
+            \hat{\boldsymbol{\theta}}_a = \arg\min_{\boldsymbol{\theta}} \left\{ \sum_{t: a_t=a} (r_t - \mathbf{x}_t^\top \boldsymbol{\theta})^2 + \|\boldsymbol{\theta}\|^2 \right\}
+        </div>
+        <p class="math-note">
+            Closed-form solution: <span class="math">\hat{\boldsymbol{\theta}}_a = \mathbf{A}_a^{-1} \mathbf{b}_a</span>
+        </p>
+        <p class="math-note">
+            The <span class="math">\mathbf{I}_d</span> term in <span class="math">\mathbf{A}_a</span>
+            provides regularization (prevents overfitting and ensures invertibility).
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Confidence Bound Term:</strong></p>
+        <div class="math-display">
+            \text{Uncertainty} = \alpha \sqrt{\mathbf{x}_t^\top \mathbf{A}_a^{-1} \mathbf{x}_t}
+        </div>
+        <p class="math-note">This term measures uncertainty about action <span class="math">a</span> at context <span class="math">\mathbf{x}_t</span>:</p>
+        <ul>
+            <li>Large <span class="math">\mathbf{A}_a^{-1}</span> (few samples) → high uncertainty → more exploration</li>
+            <li><span class="math">\mathbf{x}_t^\top \mathbf{A}_a^{-1} \mathbf{x}_t</span> is the variance of the prediction</li>
+            <li><span class="math">\alpha > 0</span> controls exploration-exploitation tradeoff (typically <span class="math">\alpha \in [0.1, 2]</span>)</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Regret Bound:</strong></p>
+        <div class="math-display">
+            R_T = \tilde{O}(d\sqrt{T})
+        </div>
+        <p class="math-note">
+            where <span class="math">d</span> is the dimension and <span class="math">T</span> is the number of rounds.
+            This is <em>sublinear</em> in <span class="math">T</span>, meaning the algorithm learns!
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Beautiful connection to statistics:</strong> The confidence bound
+            <span class="math">\alpha \sqrt{\mathbf{x}_t^\top \mathbf{A}_a^{-1} \mathbf{x}_t}</span>
+            is the standard error of the prediction in ridge regression! LinUCB is doing principled
+            statistical inference under uncertainty.
+        </p>
+        <p>
+            <strong>The <span class="math">\mathbf{A}_a^{-1}</span> matrix:</strong>
+            Think of <span class="math">\mathbf{A}_a^{-1}</span> as a "knowledge map" - it tells us
+            which regions of the context space we've explored well (small variance) and which regions
+            remain uncertain (large variance).
+        </p>
+        <p>
+            <strong>Computational efficiency:</strong> We can use the Sherman-Morrison formula for
+            efficient rank-1 updates instead of recomputing the full inverse:
+        </p>
+        <div class="math-display">
+            \mathbf{A}^{-1}_{\text{new}} = \mathbf{A}^{-1}_{\text{old}} - \frac{\mathbf{A}^{-1}_{\text{old}} \mathbf{x} \mathbf{x}^\top \mathbf{A}^{-1}_{\text{old}}}{1 + \mathbf{x}^\top \mathbf{A}^{-1}_{\text{old}} \mathbf{x}}
+        </div>
+        <p>
+            This reduces complexity from <span class="math">O(d^3)</span> to <span class="math">O(d^2)</span> per update!
+        </p>
+        <p>
+            <strong>Practical tuning of α:</strong> Start with <span class="math">\alpha = 1</span>.
+            If too exploratory (slow convergence), decrease. If converging to suboptimal actions, increase.
+        </p>
+        <p>
+            <strong>Why "optimism under uncertainty"?</strong> By adding the confidence bound to the
+            expected reward, LinUCB acts optimistically - it gives the benefit of the doubt to uncertain
+            actions. This drives exploration of under-explored regions.
+        </p>
+    </div>
+</div>

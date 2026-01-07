@@ -33,22 +33,22 @@ Handler = MyHTTPRequestHandler
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
     url = f"http://localhost:{PORT}"
     print("=" * 60)
-    print(f"🎯 Reinforcement Learning Journey - Dev Server")
+    print(f"Reinforcement Learning Journey - Dev Server")
     print("=" * 60)
-    print(f"📡 Server running at: {url}")
-    print(f"📂 Serving directory: {os.getcwd()}")
-    print("\n✨ Press Ctrl+C to stop the server\n")
+    print(f"Server running at: {url}")
+    print(f"Serving directory: {os.getcwd()}")
+    print("\nPress Ctrl+C to stop the server\n")
     print("=" * 60)
 
     # Open browser automatically
     try:
         webbrowser.open(url)
-        print(f"🌐 Opening {url} in your browser...")
+        print(f"Opening {url} in your browser...")
     except:
-        print(f"💡 Manually open {url} in your browser")
+        print(f"Manually open {url} in your browser")
 
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n\n👋 Server stopped. Happy learning!")
+        print("\n\nServer stopped. Happy learning!")
         sys.exit(0)

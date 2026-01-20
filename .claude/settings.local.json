@@ -5,6 +5,9 @@
       "Bash(start algorithms/contextual-bandits/index.html)",
       "Bash(python serve.py:*)",
       "Bash(timeout 2 curl:*)"
+    ],
+    "additionalDirectories": [
+      "/Users/shuaiyuan/GameDeveloper/Reinforcement-Learning/algorithms/q-learning"
     ]
   }
 }

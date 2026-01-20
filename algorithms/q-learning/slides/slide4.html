@@ -1,0 +1,139 @@
+<div class="slide-content">
+    <h3>Slide 4: Exploration vs Exploitation</h3>
+
+    <h4>The Fundamental Tradeoff</h4>
+    <p>
+        Q-Learning needs to <strong>explore</strong> to discover good actions, but also
+        <strong>exploit</strong> known good actions to maximize reward. The behavior policy
+        determines this balance.
+    </p>
+
+    <div class="math-box">
+        <p><strong>ε-Greedy Policy:</strong></p>
+        <div class="math-display">
+            \pi(a|s) = \begin{cases}
+                1 - \epsilon + \frac{\epsilon}{|A|} & \text{if } a = \arg\max_{a'} Q(s, a') \\
+                \frac{\epsilon}{|A|} & \text{otherwise}
+            </end{cases}
+        </div>
+        <p class="math-note">
+            With probability <span class="math">1-\epsilon</span>: take the greedy action (exploit).<br>
+            With probability <span class="math">\epsilon</span>: take a random action (explore).
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>ε-Decay Schedule:</strong></p>
+        <p class="math-note">Start with high exploration, gradually shift to exploitation:</p>
+        <div class="math-display">
+            \epsilon_t = \max(\epsilon_{\min}, \epsilon_0 \cdot \text{decay}^t)
+        </div>
+        <p class="math-note">Common schedules:</p>
+        <ul>
+            <li><strong>Exponential decay:</strong> <span class="math">\epsilon_t = \epsilon_0 \cdot 0.995^t</span></li>
+            <li><strong>Linear decay:</strong> <span class="math">\epsilon_t = \epsilon_0 - t \cdot \frac{\epsilon_0 - \epsilon_{\min}}{T}</span></li>
+            <li><strong>1/t decay:</strong> <span class="math">\epsilon_t = \frac{1}{1 + c \cdot t}</span></li>
+        </ul>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>ε-Greedy with Decay Implementation:</strong></p>
+        <pre><code class="language-python">
+class EpsilonGreedyPolicy:
+    def __init__(self, epsilon_start=1.0, epsilon_end=0.01, decay_rate=0.995):
+        self.epsilon = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.decay_rate = decay_rate
+
+    def select_action(self, Q, state, n_actions):
+        if np.random.random() < self.epsilon:
+            return np.random.randint(n_actions)  # Random action
+        else:
+            return np.argmax(Q[state])  # Best action
+
+    def decay(self):
+        self.epsilon = max(self.epsilon_end, self.epsilon * self.decay_rate)
+        </code></pre>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Other Exploration Strategies:</strong></p>
+
+        <p class="math-note"><strong>Boltzmann (Softmax) Exploration:</strong></p>
+        <div class="math-display">
+            \pi(a|s) = \frac{\exp(Q(s,a) / \tau)}{\sum_{a'} \exp(Q(s,a') / \tau)}
+        </div>
+        <p class="math-note">
+            Temperature <span class="math">\tau</span> controls randomness. High <span class="math">\tau</span>
+            → uniform random. Low <span class="math">\tau</span> → greedy.
+        </p>
+
+        <p class="math-note"><strong>UCB for Exploration:</strong></p>
+        <div class="math-display">
+            a_t = \arg\max_a \left[ Q(s,a) + c \sqrt{\frac{\ln t}{N(s,a)}} \right]
+        </div>
+        <p class="math-note">
+            Adds exploration bonus for less-visited state-action pairs (like UCB in bandits!).
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Hyperparameter Tuning Guidelines:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.5rem;">Parameter</th>
+                <th style="text-align: left; padding: 0.5rem;">Typical Range</th>
+                <th style="text-align: left; padding: 0.5rem;">Effect</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;"><span class="math">\alpha</span> (learning rate)</td>
+                <td style="padding: 0.5rem;">0.01 - 0.5</td>
+                <td style="padding: 0.5rem;">Too high → unstable; too low → slow</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;"><span class="math">\gamma</span> (discount)</td>
+                <td style="padding: 0.5rem;">0.9 - 0.999</td>
+                <td style="padding: 0.5rem;">Lower → myopic; higher → far-sighted</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;"><span class="math">\epsilon_0</span> (initial)</td>
+                <td style="padding: 0.5rem;">0.5 - 1.0</td>
+                <td style="padding: 0.5rem;">Start with high exploration</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;"><span class="math">\epsilon_{\min}</span></td>
+                <td style="padding: 0.5rem;">0.01 - 0.1</td>
+                <td style="padding: 0.5rem;">Keep some exploration always</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why decay ε?</strong> Early in training, we know little — exploring is valuable.
+            Later, we've learned good Q-values — exploiting them gives better performance.
+            The decay schedule transitions from exploration to exploitation.
+        </p>
+        <p>
+            <strong>The exploration problem in large state spaces:</strong>
+            ε-greedy explores randomly, which is inefficient in large spaces. Better strategies:
+        </p>
+        <ul>
+            <li><strong>Intrinsic motivation:</strong> Reward curiosity (visiting novel states)</li>
+            <li><strong>Optimistic initialization:</strong> Start with high Q-values to encourage exploration</li>
+            <li><strong>Count-based exploration:</strong> Bonus for rarely-visited states</li>
+        </ul>
+        <p>
+            <strong>Why keep <span class="math">\epsilon_{\min} > 0</span>?</strong>
+            In stochastic environments, the optimal action might change. A small amount of
+            exploration helps adapt to changes and ensures all state-action pairs are visited
+            for convergence guarantees.
+        </p>
+        <p>
+            <strong>Softmax vs ε-greedy:</strong> Softmax is "smarter" — it explores less-bad
+            actions more often than terrible ones. But it requires tuning the temperature parameter.
+            ε-greedy is simpler and often works well enough.
+        </p>
+    </div>
+</div>

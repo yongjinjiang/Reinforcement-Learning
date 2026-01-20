@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-Learning | RL Journey</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="algorithm.css">
+
+    <!-- KaTeX for beautiful math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+
+    <!-- PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+
+    <!-- PyScript Configuration (TOML format for 2024.1.1) -->
+    <py-config>
+        packages = ["numpy"]
+    </py-config>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* KaTeX styling */
+        .math {
+            font-size: 1.05em;
+        }
+
+        .math-display {
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .math-note {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 0.5rem 0;
+        }
+
+        /* Slide container */
+        .slide {
+            display: none;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Loading indicator */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <nav class="breadcrumb">
+                <a href="../../index.html">← Back to Home</a>
+            </nav>
+            <h1>🎮 Q-Learning</h1>
+            <p class="subtitle">Temporal Difference Learning for Optimal Control</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Introduction -->
+        <section class="algorithm-intro">
+            <h2>💡 What is Q-Learning?</h2>
+            <p>
+                Q-Learning is a <strong>model-free</strong>, <strong>off-policy</strong> reinforcement learning
+                algorithm that learns the optimal action-value function directly from experience. It's one of
+                the most fundamental and widely-used algorithms in RL, forming the foundation for modern
+                deep reinforcement learning methods like DQN.
+            </p>
+            <div class="key-insight">
+                <strong>The Key Idea:</strong> Instead of learning a model of the environment, Q-Learning
+                directly learns which action is best in each state by <em>bootstrapping</em> — updating
+                estimates based on other estimates. It uses the <em>Bellman optimality equation</em> as
+                an update rule to iteratively improve the Q-values until convergence.
+            </div>
+        </section>
+
+        <!-- Slides Section -->
+        <section class="slides-section">
+            <h2>📊 Learning Slides</h2>
+
+            <!-- Slide container - will be populated dynamically -->
+            <div id="slide-container">
+                <div class="loading">Loading slides...</div>
+            </div>
+
+            <!-- Slide Navigation -->
+            <div class="slide-nav">
+                <button id="prev-slide" onclick="changeSlide(-1)">← Previous</button>
+                <span id="slide-indicator">1 / 5</span>
+                <button id="next-slide" onclick="changeSlide(1)">Next →</button>
+            </div>
+        </section>
+
+        <!-- Key Takeaways -->
+        <section class="takeaways">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="takeaway-grid">
+                <div class="takeaway-item">
+                    <h3>1. Bellman Optimality</h3>
+                    <p>The optimal Q-function satisfies a recursive equation that Q-Learning exploits for updates</p>
+                </div>
+                <div class="takeaway-item">
+                    <h3>2. Temporal Difference</h3>
+                    <p>Learn from incomplete episodes by bootstrapping from current estimates of future value</p>
+                </div>
+                <div class="takeaway-item">
+                    <h3>3. Off-Policy Learning</h3>
+                    <p>Learn the optimal policy while following an exploratory behavior policy (like ε-greedy)</p>
+                </div>
+                <div class="takeaway-item">
+                    <h3>4. Convergence Guarantees</h3>
+                    <p>Converges to optimal Q-values given sufficient exploration and decaying learning rate</p>
+                </div>
+                <div class="takeaway-item">
+                    <h3>5. Foundation for Deep RL</h3>
+                    <p>Core algorithm behind DQN, Double DQN, and many modern AI game-playing agents</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>
+                <a href="../../index.html">← Back to Algorithm List</a> |
+                Built with PyScript, Prism.js & KaTeX
+            </p>
+        </div>
+    </footer>
+
+    <!-- Prism.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+    <!-- Slide Loading and Navigation Script -->
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 5;
+        const slideFiles = [
+            'slides/slide1.html',
+            'slides/slide2.html',
+            'slides/slide3.html',
+            'slides/slide4.html',
+            'slides/slide5.html'
+        ];
+
+        // Load all slides
+        async function loadSlides() {
+            const container = document.getElementById('slide-container');
+            container.innerHTML = ''; // Clear loading message
+
+            for (let i = 0; i < slideFiles.length; i++) {
+                try {
+                    const response = await fetch(slideFiles[i]);
+                    const html = await response.text();
+
+                    const slideDiv = document.createElement('div');
+                    slideDiv.className = 'slide';
+                    slideDiv.id = `slide-${i + 1}`;
+                    if (i === 0) slideDiv.classList.add('active');
+                    slideDiv.innerHTML = html;
+
+                    container.appendChild(slideDiv);
+                } catch (error) {
+                    console.error(`Error loading ${slideFiles[i]}:`, error);
+                }
+            }
+
+            // After loading all slides, render math and highlight code
+            renderMath();
+            Prism.highlightAll();
+        }
+
+        // Render all math formulas using KaTeX
+        function renderMath() {
+            // Render inline math (wrapped in <span class="math">)
+            document.querySelectorAll('.math').forEach(el => {
+                try {
+                    katex.render(el.textContent, el, {
+                        throwOnError: false,
+                        displayMode: false
+                    });
+                } catch (e) {
+                    console.error('KaTeX error:', e);
+                }
+            });
+
+            // Render display math (wrapped in <div class="math-display">)
+            document.querySelectorAll('.math-display').forEach(el => {
+                try {
+                    katex.render(el.textContent, el, {
+                        throwOnError: false,
+                        displayMode: true
+                    });
+                } catch (e) {
+                    console.error('KaTeX error:', e);
+                }
+            });
+        }
+
+        // Change slide
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            if (slides.length === 0) return;
+
+            slides[currentSlide - 1].classList.remove('active');
+
+            currentSlide += direction;
+
+            if (currentSlide > totalSlides) currentSlide = 1;
+            if (currentSlide < 1) currentSlide = totalSlides;
+
+            slides[currentSlide - 1].classList.add('active');
+            document.getElementById('slide-indicator').textContent = `${currentSlide} / ${totalSlides}`;
+
+            // Update URL hash
+            window.location.hash = `slide${currentSlide}`;
+
+            // Scroll to top of slides section
+            document.querySelector('.slides-section').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Go to specific slide
+        function goToSlide(slideNum) {
+            if (slideNum < 1 || slideNum > totalSlides) return;
+
+            const slides = document.querySelectorAll('.slide');
+            if (slides.length === 0) return;
+
+            slides[currentSlide - 1].classList.remove('active');
+            currentSlide = slideNum;
+            slides[currentSlide - 1].classList.add('active');
+            document.getElementById('slide-indicator').textContent = `${currentSlide} / ${totalSlides}`;
+
+            // Update URL hash
+            window.location.hash = `slide${currentSlide}`;
+
+            // Scroll to top of slides section
+            document.querySelector('.slides-section').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+
+        // Handle URL hash changes
+        function handleHashChange() {
+            const hash = window.location.hash;
+            if (hash.startsWith('#slide')) {
+                const slideNum = parseInt(hash.replace('#slide', ''));
+                if (!isNaN(slideNum)) {
+                    goToSlide(slideNum);
+                }
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+        });
+
+        // Load slides when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSlides().then(() => {
+                // Check URL hash after slides are loaded
+                handleHashChange();
+            });
+        });
+
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashChange);
+
+        // Preload NumPy for PyScript
+        window.addEventListener('load', async () => {
+            if (window.pyscript) {
+                try {
+                    await window.pyscript.interpreter.loadPackage('numpy');
+                    console.log('✅ NumPy preloaded successfully');
+                } catch (e) {
+                    console.log('NumPy will be loaded when needed');
+                }
+            }
+        });
+
+        // Global function to run Python experiment
+        window.runExperiment = function() {
+            console.log('🔘 runExperiment called');
+            console.log('🔍 window.runPythonExperiment exists?', typeof window.runPythonExperiment);
+
+            if (window.runPythonExperiment) {
+                try {
+                    console.log('✅ Calling window.runPythonExperiment()...');
+                    window.runPythonExperiment();
+                } catch (e) {
+                    console.error('❌ Error calling runPythonExperiment:', e);
+                    const outputEl = document.getElementById('output');
+                    if (outputEl) {
+                        outputEl.innerText = 'Error running experiment. Check console: ' + e.message;
+                    }
+                }
+            } else {
+                console.warn('⚠️ window.runPythonExperiment not found');
+                const outputEl = document.getElementById('output');
+                if (outputEl) {
+                    outputEl.innerText = 'Python not ready yet. Please wait a moment and try again.';
+                }
+            }
+        };
+    </script>
+</body>
+</html>

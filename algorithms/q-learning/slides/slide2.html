@@ -1,0 +1,115 @@
+<div class="slide-content">
+    <h3>Slide 2: Temporal Difference Learning</h3>
+
+    <h4>Learning from Experience</h4>
+    <p>
+        <strong>Temporal Difference (TD) learning</strong> is a method that combines ideas from
+        Monte Carlo methods (learning from experience) and dynamic programming (bootstrapping).
+        It's the foundation of Q-Learning.
+    </p>
+
+    <div class="math-box">
+        <p><strong>Monte Carlo vs. TD:</strong></p>
+        <p class="math-note">Monte Carlo: Wait until episode ends, use actual return</p>
+        <div class="math-display">
+            V(S_t) \leftarrow V(S_t) + \alpha \left[ G_t - V(S_t) \right]
+        </div>
+        <p class="math-note">where <span class="math">G_t = R_{t+1} + \gamma R_{t+2} + \gamma^2 R_{t+3} + \ldots</span> is the actual return</p>
+
+        <p class="math-note">TD(0): Update immediately using estimate of return</p>
+        <div class="math-display">
+            V(S_t) \leftarrow V(S_t) + \alpha \left[ R_{t+1} + \gamma V(S_{t+1}) - V(S_t) \right]
+        </div>
+        <p class="math-note">where <span class="math">R_{t+1} + \gamma V(S_{t+1})</span> is the <em>TD target</em></p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>TD Error (the learning signal):</strong></p>
+        <div class="math-display">
+            \delta_t = R_{t+1} + \gamma V(S_{t+1}) - V(S_t)
+        </div>
+        <p class="math-note">
+            The TD error measures the difference between our prediction <span class="math">V(S_t)</span>
+            and a better estimate <span class="math">R_{t+1} + \gamma V(S_{t+1})</span>.
+            We update in the direction of reducing this error.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Why "Bootstrapping"?</strong></p>
+        <ul>
+            <li><strong>Monte Carlo:</strong> Uses <em>actual</em> future rewards (no bootstrapping)</li>
+            <li><strong>TD:</strong> Uses <em>estimated</em> future value (bootstraps from <span class="math">V(S_{t+1})</span>)</li>
+        </ul>
+        <p class="math-note">
+            Bootstrapping means updating estimates based on other estimates.
+            This allows learning before the episode ends!
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Advantages of TD Learning:</strong></p>
+        <ul>
+            <li><strong>Online learning:</strong> Update after each step, don't wait for episode end</li>
+            <li><strong>Continuing tasks:</strong> Works for tasks that never terminate</li>
+            <li><strong>Lower variance:</strong> Less noisy than Monte Carlo returns</li>
+            <li><strong>Faster convergence:</strong> Often learns faster in practice</li>
+        </ul>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>TD(0) for State Values:</strong></p>
+        <pre><code class="language-python">
+def td_zero(env, policy, alpha=0.1, gamma=0.99, n_episodes=1000):
+    V = defaultdict(float)  # Initialize V(s) = 0 for all s
+
+    for episode in range(n_episodes):
+        state = env.reset()
+        done = False
+
+        while not done:
+            action = policy(state)
+            next_state, reward, done = env.step(action)
+
+            # TD update
+            td_target = reward + gamma * V[next_state] * (1 - done)
+            td_error = td_target - V[state]
+            V[state] = V[state] + alpha * td_error
+
+            state = next_state
+
+    return V
+        </code></pre>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>The bias-variance tradeoff:</strong>
+        </p>
+        <ul>
+            <li><strong>Monte Carlo:</strong> Unbiased (uses true returns) but high variance (rewards are stochastic)</li>
+            <li><strong>TD:</strong> Biased (uses estimated values) but lower variance (bootstrapping smooths noise)</li>
+        </ul>
+        <p>
+            In practice, the bias of TD learning decreases as estimates improve, while the reduced
+            variance often leads to faster learning.
+        </p>
+        <p>
+            <strong>Learning rate <span class="math">\alpha</span>:</strong>
+            Controls how much we update on each step. Too high → unstable learning.
+            Too low → slow learning. Common values: 0.01 to 0.1.
+        </p>
+        <p>
+            <strong>Key insight:</strong> TD learning is like a "leaky" average. Old estimates
+            are gradually replaced by new information, with <span class="math">\alpha</span>
+            controlling the replacement rate.
+        </p>
+        <p>
+            <strong>Why does TD work?</strong> If <span class="math">V(S_{t+1})</span> is accurate,
+            then <span class="math">R_{t+1} + \gamma V(S_{t+1})</span> is a good estimate of the true
+            value of <span class="math">S_t</span>. Even if it's not accurate, the errors average out
+            over many updates, leading to convergence.
+        </p>
+    </div>
+</div>

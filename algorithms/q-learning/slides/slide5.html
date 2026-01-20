@@ -1,0 +1,381 @@
+<div class="slide-content">
+    <h3>Slide 5: Interactive Demo & Code</h3>
+
+    <h4>Q-Learning on GridWorld</h4>
+    <p>Run the code below to see Q-Learning solve a GridWorld navigation problem:</p>
+
+    <!-- PyScript Code Section -->
+    <div class="code-demo">
+        <h4>📝 Python Implementation</h4>
+        <div class="code-container">
+            <pre><code class="language-python" id="ql-code">import numpy as np
+from js import document
+
+# GridWorld Environment
+class GridWorld:
+    """
+    Simple GridWorld: Agent navigates from start to goal.
+    Actions: 0=Up, 1=Right, 2=Down, 3=Left
+    """
+    def __init__(self, size=5):
+        self.size = size
+        self.n_states = size * size
+        self.n_actions = 4
+        self.start = 0  # Top-left
+        self.goal = size * size - 1  # Bottom-right
+        self.state = self.start
+
+    def reset(self):
+        self.state = self.start
+        return self.state
+
+    def step(self, action):
+        row, col = self.state // self.size, self.state % self.size
+
+        # Move based on action
+        if action == 0 and row > 0:  # Up
+            row -= 1
+        elif action == 1 and col < self.size - 1:  # Right
+            col += 1
+        elif action == 2 and row < self.size - 1:  # Down
+            row += 1
+        elif action == 3 and col > 0:  # Left
+            col -= 1
+
+        self.state = row * self.size + col
+        done = (self.state == self.goal)
+        reward = 1.0 if done else -0.01  # Small penalty per step
+        return self.state, reward, done
+
+
+# Q-Learning Agent
+class QLearningAgent:
+    def __init__(self, n_states, n_actions, alpha=0.1, gamma=0.99,
+                 epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995):
+        self.n_states = n_states
+        self.n_actions = n_actions
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.Q = np.zeros((n_states, n_actions))
+
+    def select_action(self, state):
+        if np.random.random() < self.epsilon:
+            return np.random.randint(self.n_actions)
+        return np.argmax(self.Q[state])
+
+    def update(self, state, action, reward, next_state, done):
+        best_next = np.max(self.Q[next_state]) if not done else 0
+        td_target = reward + self.gamma * best_next
+        td_error = td_target - self.Q[state, action]
+        self.Q[state, action] += self.alpha * td_error
+
+    def decay_epsilon(self):
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+
+def run_experiment(n_episodes=500):
+    """Train Q-Learning agent on GridWorld"""
+    env = GridWorld(size=5)
+
+    # Compare different learning rates
+    agents = {
+        'α=0.1': QLearningAgent(env.n_states, env.n_actions, alpha=0.1),
+        'α=0.3': QLearningAgent(env.n_states, env.n_actions, alpha=0.3),
+        'α=0.5': QLearningAgent(env.n_states, env.n_actions, alpha=0.5),
+    }
+
+    results = {name: {'rewards': [], 'steps': []} for name in agents}
+
+    for episode in range(n_episodes):
+        for name, agent in agents.items():
+            state = env.reset()
+            total_reward = 0
+            steps = 0
+
+            for _ in range(100):  # Max steps per episode
+                action = agent.select_action(state)
+                next_state, reward, done = env.step(action)
+                agent.update(state, action, reward, next_state, done)
+                total_reward += reward
+                steps += 1
+                state = next_state
+                if done:
+                    break
+
+            agent.decay_epsilon()
+            results[name]['rewards'].append(total_reward)
+            results[name]['steps'].append(steps)
+
+    # Display results
+    output = "Q-LEARNING RESULTS (GridWorld 5x5)\n"
+    output += "=" * 45 + "\n"
+    output += f"Episodes: {n_episodes}\n"
+    output += "=" * 45 + "\n\n"
+
+    for name, data in results.items():
+        avg_reward_last_50 = np.mean(data['rewards'][-50:])
+        avg_steps_last_50 = np.mean(data['steps'][-50:])
+        output += f"{name}:\n"
+        output += f"  Avg Reward (last 50): {avg_reward_last_50:.3f}\n"
+        output += f"  Avg Steps (last 50):  {avg_steps_last_50:.1f}\n\n"
+
+    # Show learned policy for best agent
+    best_agent = agents['α=0.3']
+    output += "=" * 45 + "\n"
+    output += "Learned Policy (α=0.3):\n"
+    output += "(↑=Up, →=Right, ↓=Down, ←=Left, G=Goal)\n\n"
+
+    arrows = ['↑', '→', '↓', '←']
+    for row in range(env.size):
+        line = "  "
+        for col in range(env.size):
+            state = row * env.size + col
+            if state == env.goal:
+                line += " G "
+            else:
+                best_action = np.argmax(best_agent.Q[state])
+                line += f" {arrows[best_action]} "
+        output += line + "\n"
+
+    output += "\n" + "=" * 45 + "\n"
+    output += "Key Observations:\n"
+    output += "• Agent learns to navigate to goal (G)\n"
+    output += "• Arrows show optimal direction in each cell\n"
+    output += "• Higher α learns faster but may be less stable\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+# Auto-run on load
+run_experiment()
+</code></pre>
+        </div>
+
+        <div class="run-section">
+            <button id="run-code-ql" onclick="if(window.runPythonExperiment){window.runPythonExperiment()}else{alert('Python not ready. Please wait a moment.')}">▶ Run Experiment</button>
+            <div id="output" class="output-box">Loading Python environment...</div>
+        </div>
+
+        <!-- PyScript block -->
+        <script type="py">
+from js import document
+print("📦 Loading Q-Learning simulation...")
+
+try:
+    import numpy as np
+    print("✅ NumPy loaded!")
+except ImportError as e:
+    print(f"❌ NumPy not available: {e}")
+    document.getElementById("output").innerText = "Error: NumPy failed to load."
+
+# GridWorld Environment
+class GridWorld:
+    """
+    Simple GridWorld: Agent navigates from start to goal.
+    Actions: 0=Up, 1=Right, 2=Down, 3=Left
+    """
+    def __init__(self, size=5):
+        self.size = size
+        self.n_states = size * size
+        self.n_actions = 4
+        self.start = 0  # Top-left
+        self.goal = size * size - 1  # Bottom-right
+        self.state = self.start
+
+    def reset(self):
+        self.state = self.start
+        return self.state
+
+    def step(self, action):
+        row, col = self.state // self.size, self.state % self.size
+
+        # Move based on action
+        if action == 0 and row > 0:  # Up
+            row -= 1
+        elif action == 1 and col < self.size - 1:  # Right
+            col += 1
+        elif action == 2 and row < self.size - 1:  # Down
+            row += 1
+        elif action == 3 and col > 0:  # Left
+            col -= 1
+
+        self.state = row * self.size + col
+        done = (self.state == self.goal)
+        reward = 1.0 if done else -0.01  # Small penalty per step
+        return self.state, reward, done
+
+
+# Q-Learning Agent
+class QLearningAgent:
+    def __init__(self, n_states, n_actions, alpha=0.1, gamma=0.99,
+                 epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995):
+        self.n_states = n_states
+        self.n_actions = n_actions
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.Q = np.zeros((n_states, n_actions))
+
+    def select_action(self, state):
+        if np.random.random() < self.epsilon:
+            return np.random.randint(self.n_actions)
+        return np.argmax(self.Q[state])
+
+    def update(self, state, action, reward, next_state, done):
+        best_next = np.max(self.Q[next_state]) if not done else 0
+        td_target = reward + self.gamma * best_next
+        td_error = td_target - self.Q[state, action]
+        self.Q[state, action] += self.alpha * td_error
+
+    def decay_epsilon(self):
+        self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
+
+
+def run_experiment(n_episodes=500):
+    """Train Q-Learning agent on GridWorld"""
+    print(f"🔄 Starting Q-Learning experiment with {n_episodes} episodes...")
+    document.getElementById("output").innerText = "Running experiment..."
+
+    env = GridWorld(size=5)
+
+    # Compare different learning rates
+    agents = {
+        'α=0.1': QLearningAgent(env.n_states, env.n_actions, alpha=0.1),
+        'α=0.3': QLearningAgent(env.n_states, env.n_actions, alpha=0.3),
+        'α=0.5': QLearningAgent(env.n_states, env.n_actions, alpha=0.5),
+    }
+
+    results = {name: {'rewards': [], 'steps': []} for name in agents}
+
+    for episode in range(n_episodes):
+        for name, agent in agents.items():
+            state = env.reset()
+            total_reward = 0
+            steps = 0
+
+            for _ in range(100):  # Max steps per episode
+                action = agent.select_action(state)
+                next_state, reward, done = env.step(action)
+                agent.update(state, action, reward, next_state, done)
+                total_reward += reward
+                steps += 1
+                state = next_state
+                if done:
+                    break
+
+            agent.decay_epsilon()
+            results[name]['rewards'].append(total_reward)
+            results[name]['steps'].append(steps)
+
+    # Display results
+    output = "Q-LEARNING RESULTS (GridWorld 5x5)\n"
+    output += "=" * 45 + "\n"
+    output += f"Episodes: {n_episodes}\n"
+    output += "=" * 45 + "\n\n"
+
+    for name, data in results.items():
+        avg_reward_last_50 = np.mean(data['rewards'][-50:])
+        avg_steps_last_50 = np.mean(data['steps'][-50:])
+        output += f"{name}:\n"
+        output += f"  Avg Reward (last 50): {avg_reward_last_50:.3f}\n"
+        output += f"  Avg Steps (last 50):  {avg_steps_last_50:.1f}\n\n"
+
+    # Show learned policy for best agent
+    best_agent = agents['α=0.3']
+    output += "=" * 45 + "\n"
+    output += "Learned Policy (α=0.3):\n"
+    output += "(↑=Up, →=Right, ↓=Down, ←=Left, G=Goal)\n\n"
+
+    arrows = ['↑', '→', '↓', '←']
+    for row in range(env.size):
+        line = "  "
+        for col in range(env.size):
+            state = row * env.size + col
+            if state == env.goal:
+                line += " G "
+            else:
+                best_action = np.argmax(best_agent.Q[state])
+                line += f" {arrows[best_action]} "
+        output += line + "\n"
+
+    output += "\n" + "=" * 45 + "\n"
+    output += "Key Observations:\n"
+    output += "• Agent learns to navigate to goal (G)\n"
+    output += "• Arrows show optimal direction in each cell\n"
+    output += "• Higher α learns faster but may be less stable\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+# Run on load
+print("🎮 Running initial Q-Learning experiment...")
+try:
+    run_experiment()
+    print("✅ Ready! Click 'Run Experiment' to run again.")
+except Exception as e:
+    document.getElementById("output").innerText = f"Error: {str(e)}"
+    print(f"❌ Error: {e}")
+    import traceback
+    traceback.print_exc()
+
+# Expose to JavaScript
+from pyodide.ffi import create_proxy
+from js import window
+
+js_run_experiment = create_proxy(run_experiment)
+window.runPythonExperiment = js_run_experiment
+
+print("✨ Function exposed as window.runPythonExperiment")
+print("📢 Ready to run experiments! Click the button to run again.")
+        </script>
+    </div>
+
+    <div class="math-box">
+        <p><strong>What's happening in the simulation:</strong></p>
+        <ul>
+            <li>5x5 GridWorld: Agent starts at top-left (0,0), goal is bottom-right (4,4)</li>
+            <li>Actions: Up, Right, Down, Left</li>
+            <li>Reward: +1 for reaching goal, -0.01 per step (encourages efficiency)</li>
+            <li>Agent learns Q-values using ε-greedy exploration with decay</li>
+            <li>We compare different learning rates <span class="math">\alpha</span></li>
+            <li>The learned policy shows the best action (arrow) in each cell</li>
+        </ul>
+    </div>
+
+    <div class="learning-note">
+        <h4>🔬 Experiment & Learn</h4>
+        <p>
+            <strong>Try modifying the code!</strong> Some experiments to try:
+        </p>
+        <ul>
+            <li>Change grid size to 7 or 10 - does it take longer to learn?</li>
+            <li>Increase <code>n_episodes</code> to 1000 - do the policies converge more?</li>
+            <li>Try different <code>gamma</code> values (0.5, 0.9, 0.99) - how does it affect the policy?</li>
+            <li>Change <code>epsilon_decay</code> to 0.99 or 0.999 - what happens?</li>
+            <li>Add obstacles (walls) to the grid - can the agent learn to avoid them?</li>
+        </ul>
+
+        <p>
+            <strong>Expected observations:</strong>
+        </p>
+        <ul>
+            <li>Optimal policy: arrows should point toward the goal (down and right)</li>
+            <li>Higher <span class="math">\alpha</span> learns faster but may oscillate</li>
+            <li>After training, the agent should reach the goal in 8 steps (shortest path)</li>
+            <li>With enough training, all three learning rates converge to similar policies</li>
+        </ul>
+
+        <p>
+            <strong>From GridWorld to DQN:</strong> This simple Q-table approach works for small
+            state spaces. For large or continuous state spaces (like Atari games), we replace
+            the Q-table with a neural network — that's Deep Q-Network (DQN)!
+        </p>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+<div class="slide-content">
+    <h3>Slide 1: Markov Decision Processes & Bellman Equation</h3>
+
+    <h4>The MDP Framework</h4>
+    <p>
+        Q-Learning operates in a <strong>Markov Decision Process (MDP)</strong>, defined by the tuple
+        <span class="math">(S, A, P, R, \gamma)</span>:
+    </p>
+    <ul>
+        <li><strong>S:</strong> Set of states the agent can be in</li>
+        <li><strong>A:</strong> Set of actions the agent can take</li>
+        <li><strong>P(s'|s,a):</strong> Transition probability to state <span class="math">s'</span> given state <span class="math">s</span> and action <span class="math">a</span></li>
+        <li><strong>R(s,a,s'):</strong> Reward received for transition</li>
+        <li><strong><span class="math">\gamma \in [0,1]</span>:</strong> Discount factor for future rewards</li>
+    </ul>
+
+    <div class="math-box">
+        <p><strong>Value Functions:</strong></p>
+        <p class="math-note">State-value function (how good is it to be in state <span class="math">s</span>?):</p>
+        <div class="math-display">
+            V^\pi(s) = \mathbb{E}_\pi \left[ \sum_{t=0}^{\infty} \gamma^t R_{t+1} \mid S_0 = s \right]
+        </div>
+        <p class="math-note">Action-value function (how good is it to take action <span class="math">a</span> in state <span class="math">s</span>?):</p>
+        <div class="math-display">
+            Q^\pi(s,a) = \mathbb{E}_\pi \left[ \sum_{t=0}^{\infty} \gamma^t R_{t+1} \mid S_0 = s, A_0 = a \right]
+        </div>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Bellman Expectation Equation:</strong></p>
+        <p class="math-note">The Q-function satisfies a recursive relationship:</p>
+        <div class="math-display">
+            Q^\pi(s,a) = \mathbb{E} \left[ R_{t+1} + \gamma Q^\pi(S_{t+1}, A_{t+1}) \mid S_t = s, A_t = a \right]
+        </div>
+        <p class="math-note">
+            The value of taking action <span class="math">a</span> in state <span class="math">s</span> equals
+            the immediate reward plus the discounted value of the next state-action pair.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Bellman Optimality Equation:</strong></p>
+        <p class="math-note">The <em>optimal</em> Q-function <span class="math">Q^*</span> satisfies:</p>
+        <div class="math-display">
+            Q^*(s,a) = \mathbb{E} \left[ R_{t+1} + \gamma \max_{a'} Q^*(S_{t+1}, a') \mid S_t = s, A_t = a \right]
+        </div>
+        <p class="math-note">
+            This is the foundation of Q-Learning! The optimal value of an action equals the
+            immediate reward plus the discounted value of the <em>best</em> action in the next state.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Optimal Policy:</strong></p>
+        <p class="math-note">Once we have <span class="math">Q^*</span>, the optimal policy is simply:</p>
+        <div class="math-display">
+            \pi^*(s) = \arg\max_a Q^*(s,a)
+        </div>
+        <p class="math-note">
+            Always choose the action with the highest Q-value in each state.
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why is the Bellman equation so powerful?</strong> It transforms a complex sequential
+            decision problem into a recursive relationship. Instead of considering all future rewards
+            directly, we only need to consider the immediate reward and the value of the next state.
+        </p>
+        <p>
+            <strong>The max operator is key:</strong> Notice the difference between the expectation equation
+            (uses <span class="math">Q^\pi(S_{t+1}, A_{t+1})</span>) and the optimality equation
+            (uses <span class="math">\max_{a'} Q^*(S_{t+1}, a')</span>). The max makes Q-Learning
+            learn the optimal policy regardless of the behavior policy — this is what makes it <em>off-policy</em>.
+        </p>
+        <p>
+            <strong>Discount factor <span class="math">\gamma</span>:</strong>
+        </p>
+        <ul>
+            <li><span class="math">\gamma = 0</span>: Only care about immediate rewards (myopic)</li>
+            <li><span class="math">\gamma = 0.9</span>: Balance immediate and future rewards</li>
+            <li><span class="math">\gamma = 0.99</span>: Far-sighted, values long-term rewards highly</li>
+            <li><span class="math">\gamma = 1</span>: Undiscounted (only works for episodic tasks)</li>
+        </ul>
+        <p>
+            <strong>Connection to bandits:</strong> Multi-armed bandits are MDPs with a single state!
+            Q-Learning extends bandits to sequential decision-making where actions affect future states.
+        </p>
+    </div>
+</div>

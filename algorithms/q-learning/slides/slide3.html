@@ -1,0 +1,140 @@
+<div class="slide-content">
+    <h3>Slide 3: The Q-Learning Algorithm</h3>
+
+    <h4>Off-Policy TD Control</h4>
+    <p>
+        Q-Learning applies TD learning to <strong>action-values</strong> instead of state-values,
+        and uses the <strong>max</strong> operator to learn the optimal policy directly.
+    </p>
+
+    <div class="math-box">
+        <p><strong>Q-Learning Update Rule:</strong></p>
+        <div class="math-display">
+            Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \max_{a} Q(S_{t+1}, a) - Q(S_t, A_t) \right]
+        </div>
+        <p class="math-note">
+            This is a direct application of the Bellman optimality equation as an update rule!
+        </p>
+        <ul>
+            <li><span class="math">Q(S_t, A_t)</span>: Current Q-value estimate</li>
+            <li><span class="math">R_{t+1}</span>: Immediate reward received</li>
+            <li><span class="math">\gamma \max_{a} Q(S_{t+1}, a)</span>: Discounted best Q-value in next state</li>
+            <li><span class="math">\alpha</span>: Learning rate</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>The TD Target for Q-Learning:</strong></p>
+        <div class="math-display">
+            \text{TD Target} = R_{t+1} + \gamma \max_{a} Q(S_{t+1}, a)
+        </div>
+        <p class="math-note">
+            Unlike SARSA (which uses <span class="math">Q(S_{t+1}, A_{t+1})</span>),
+            Q-Learning uses the max over all actions. This makes it <em>off-policy</em> —
+            it learns about the greedy policy while following any exploration policy!
+        </p>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>Q-Learning Algorithm:</strong></p>
+        <pre><code class="language-python">
+def q_learning(env, alpha=0.1, gamma=0.99, epsilon=0.1, n_episodes=1000):
+    """
+    Q-Learning: Off-policy TD control
+    """
+    # Initialize Q(s,a) arbitrarily
+    Q = defaultdict(lambda: np.zeros(env.n_actions))
+
+    for episode in range(n_episodes):
+        state = env.reset()
+        done = False
+
+        while not done:
+            # Choose action using ε-greedy policy
+            if np.random.random() < epsilon:
+                action = np.random.randint(env.n_actions)  # Explore
+            else:
+                action = np.argmax(Q[state])  # Exploit
+
+            # Take action, observe reward and next state
+            next_state, reward, done = env.step(action)
+
+            # Q-Learning update (uses max, not the actual next action!)
+            best_next_action = np.argmax(Q[next_state])
+            td_target = reward + gamma * Q[next_state][best_next_action] * (1 - done)
+            td_error = td_target - Q[state][action]
+            Q[state][action] += alpha * td_error
+
+            state = next_state
+
+    return Q
+        </code></pre>
+    </div>
+
+    <div class="math-box">
+        <p><strong>On-Policy vs Off-Policy:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.5rem;">Property</th>
+                <th style="text-align: left; padding: 0.5rem;">SARSA (On-Policy)</th>
+                <th style="text-align: left; padding: 0.5rem;">Q-Learning (Off-Policy)</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Update uses</td>
+                <td style="padding: 0.5rem;"><span class="math">Q(S', A')</span> (actual next action)</td>
+                <td style="padding: 0.5rem;"><span class="math">\max_a Q(S', a)</span> (best action)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Learns about</td>
+                <td style="padding: 0.5rem;">Behavior policy (ε-greedy)</td>
+                <td style="padding: 0.5rem;">Optimal policy (greedy)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;">Behavior policy</td>
+                <td style="padding: 0.5rem;">Must be the target policy</td>
+                <td style="padding: 0.5rem;">Can be any exploratory policy</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Convergence Theorem:</strong></p>
+        <p class="math-note">Q-Learning converges to <span class="math">Q^*</span> with probability 1, provided:</p>
+        <ol>
+            <li>All state-action pairs are visited infinitely often</li>
+            <li>The learning rate satisfies: <span class="math">\sum_t \alpha_t = \infty</span> and <span class="math">\sum_t \alpha_t^2 < \infty</span></li>
+        </ol>
+        <p class="math-note">
+            In practice: use a constant small <span class="math">\alpha</span> (like 0.1) or decay it over time.
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why is off-policy learning powerful?</strong>
+        </p>
+        <ul>
+            <li><strong>Experience replay:</strong> Can learn from old experiences stored in a buffer</li>
+            <li><strong>Learning from demonstrations:</strong> Can learn from human or expert behavior</li>
+            <li><strong>Parallel learning:</strong> Can learn multiple policies from the same data</li>
+        </ul>
+        <p>
+            <strong>The "deadly triad" problem:</strong> When combining off-policy learning +
+            function approximation + bootstrapping, Q-learning can diverge! This is why DQN
+            uses techniques like target networks and experience replay.
+        </p>
+        <p>
+            <strong>Practical tip:</strong> Q-Learning can overestimate Q-values because of the
+            max operator (maximization bias). Double Q-Learning addresses this by using two
+            Q-functions to decouple action selection from evaluation.
+        </p>
+        <p>
+            <strong>When to use Q-Learning vs SARSA?</strong>
+        </p>
+        <ul>
+            <li><strong>Q-Learning:</strong> When you want to learn the optimal policy regardless of exploration</li>
+            <li><strong>SARSA:</strong> When safety during learning matters (e.g., cliff walking problem)</li>
+        </ul>
+    </div>
+</div>

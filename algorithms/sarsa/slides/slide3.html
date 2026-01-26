@@ -1,0 +1,141 @@
+<div class="slide-content">
+    <h3>Slide 3: SARSA vs Q-Learning — The Cliff Walking Example</h3>
+
+    <h4>A Classic Comparison</h4>
+    <p>
+        The <strong>Cliff Walking</strong> problem perfectly illustrates the behavioral difference
+        between SARSA and Q-Learning. An agent must navigate from start to goal along a cliff edge.
+        Falling off the cliff gives a large negative reward.
+    </p>
+
+    <div class="math-box">
+        <p><strong>The Cliff Walking Environment:</strong></p>
+        <pre style="font-family: monospace; line-height: 1.4; margin: 0.5rem 0;">
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ S │ C │ C │ C │ C │ C │ C │ C │ C │ C │ C │ G │
+└───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+        S = Start, G = Goal, C = Cliff (fall = -100, back to start)
+        Each step = -1 reward
+        </pre>
+    </div>
+
+    <div class="math-box">
+        <p><strong>What Each Algorithm Learns:</strong></p>
+
+        <p class="math-note"><strong>Q-Learning (Optimal but Risky Path):</strong></p>
+        <pre style="font-family: monospace; line-height: 1.4; margin: 0.5rem 0;">
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│   │   │   │   │   │   │   │   │   │   │   │   │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ → │ → │ → │ → │ → │ → │ → │ → │ → │ → │ → │ ↓ │  ← Optimal path
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ S │ C │ C │ C │ C │ C │ C │ C │ C │ C │ C │ G │
+└───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+        </pre>
+        <p class="math-note">
+            Q-Learning finds the shortest path (13 steps), but it's right along the cliff.
+            During training with ε-greedy, random exploration causes frequent falls!
+        </p>
+
+        <p class="math-note"><strong>SARSA (Safe Path):</strong></p>
+        <pre style="font-family: monospace; line-height: 1.4; margin: 0.5rem 0;">
+┌───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┬───┐
+│ → │ → │ → │ → │ → │ → │ → │ → │ → │ → │ → │ ↓ │  ← Safe path
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ↑ │   │   │   │   │   │   │   │   │   │   │ ↓ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ ↑ │   │   │   │   │   │   │   │   │   │   │ ↓ │
+├───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┼───┤
+│ S │ C │ C │ C │ C │ C │ C │ C │ C │ C │ C │ G │
+└───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┴───┘
+        </pre>
+        <p class="math-note">
+            SARSA learns a longer but safer path (17 steps) that stays away from the cliff.
+            It accounts for the fact that ε-greedy exploration might cause random moves.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Why the Difference?</strong></p>
+        <ul>
+            <li>
+                <strong>Q-Learning update:</strong>
+                <span class="math">Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]</span>
+                <p class="math-note">
+                    Assumes you'll take the best action next. Near the cliff, the best action is
+                    "move along cliff" — Q-Learning ignores the risk of random exploration.
+                </p>
+            </li>
+            <li>
+                <strong>SARSA update:</strong>
+                <span class="math">Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma Q(s',a') - Q(s,a)]</span>
+                <p class="math-note">
+                    Uses the actual action <span class="math">a'</span> that will be taken
+                    (which might be random!). Near the cliff, sometimes <span class="math">a'</span>
+                    is "fall off cliff", so Q-values near the cliff are lower.
+                </p>
+            </li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Performance Comparison:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.5rem;">Metric</th>
+                <th style="text-align: left; padding: 0.5rem;">Q-Learning</th>
+                <th style="text-align: left; padding: 0.5rem;">SARSA</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Final policy path length</td>
+                <td style="padding: 0.5rem;">Optimal (shortest)</td>
+                <td style="padding: 0.5rem;">Longer but safer</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Reward during training</td>
+                <td style="padding: 0.5rem;">Lower (many cliff falls)</td>
+                <td style="padding: 0.5rem;">Higher (fewer falls)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;">Reward after training (ε=0)</td>
+                <td style="padding: 0.5rem;">Highest (optimal path)</td>
+                <td style="padding: 0.5rem;">Lower (safe path learned)</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>The core insight:</strong> SARSA learns a policy that's optimal
+            <em>given that you'll sometimes explore</em>. Q-Learning learns a policy
+            that's optimal <em>assuming perfect execution</em>.
+        </p>
+        <p>
+            <strong>When to use which?</strong>
+        </p>
+        <ul>
+            <li><strong>SARSA:</strong> When learning in the real world where exploration is costly
+                (robotics, trading, healthcare). Safety during learning matters!</li>
+            <li><strong>Q-Learning:</strong> When you can simulate cheaply and only care about
+                final performance (games, simulations).</li>
+        </ul>
+        <p>
+            <strong>Interesting edge case:</strong> If ε = 0 (no exploration), SARSA and Q-Learning
+            are identical! The difference only matters when there's exploration.
+        </p>
+        <p>
+            <strong>Real-world analogy:</strong> Q-Learning is like planning the fastest driving route
+            ignoring that you might make mistakes. SARSA is like planning a route that accounts for
+            the fact that you sometimes miss turns.
+        </p>
+    </div>
+</div>

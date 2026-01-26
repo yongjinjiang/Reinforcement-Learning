@@ -1,0 +1,117 @@
+<div class="slide-content">
+    <h3>Slide 2: The SARSA Algorithm</h3>
+
+    <h4>State-Action-Reward-State-Action</h4>
+    <p>
+        The name <strong>SARSA</strong> comes from the quintuple of values used in each update:
+        <span class="math">(S_t, A_t, R_{t+1}, S_{t+1}, A_{t+1})</span>. This captures the full
+        transition from one state-action pair to the next.
+    </p>
+
+    <div class="math-box">
+        <p><strong>SARSA Update Rule:</strong></p>
+        <div class="math-display">
+            Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]
+        </div>
+        <p class="math-note">
+            The key insight: we need to know <span class="math">A_{t+1}</span> (the next action)
+            <em>before</em> we can update <span class="math">Q(S_t, A_t)</span>.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>The SARSA Tuple Breakdown:</strong></p>
+        <ul>
+            <li><span class="math">S_t</span> — Current state</li>
+            <li><span class="math">A_t</span> — Action taken (using ε-greedy on Q)</li>
+            <li><span class="math">R_{t+1}</span> — Reward received</li>
+            <li><span class="math">S_{t+1}</span> — Next state observed</li>
+            <li><span class="math">A_{t+1}</span> — Next action selected (using ε-greedy on Q)</li>
+        </ul>
+        <p class="math-note">
+            Notice: We select <span class="math">A_{t+1}</span> using the <em>same</em> ε-greedy policy,
+            then use it in our update. This is what makes SARSA on-policy.
+        </p>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>SARSA Algorithm:</strong></p>
+        <pre><code class="language-python">
+def sarsa(env, alpha=0.1, gamma=0.99, epsilon=0.1, n_episodes=1000):
+    """
+    SARSA: On-policy TD control
+    """
+    # Initialize Q(s,a) arbitrarily
+    Q = defaultdict(lambda: np.zeros(env.n_actions))
+
+    for episode in range(n_episodes):
+        state = env.reset()
+
+        # Choose initial action using ε-greedy
+        if np.random.random() < epsilon:
+            action = np.random.randint(env.n_actions)
+        else:
+            action = np.argmax(Q[state])
+
+        done = False
+        while not done:
+            # Take action, observe reward and next state
+            next_state, reward, done = env.step(action)
+
+            # Choose next action using ε-greedy (BEFORE updating!)
+            if np.random.random() < epsilon:
+                next_action = np.random.randint(env.n_actions)
+            else:
+                next_action = np.argmax(Q[next_state])
+
+            # SARSA update: use actual next action
+            td_target = reward + gamma * Q[next_state][next_action] * (1 - done)
+            td_error = td_target - Q[state][action]
+            Q[state][action] += alpha * td_error
+
+            # Move to next state-action pair
+            state = next_state
+            action = next_action  # This action will be taken next iteration
+
+    return Q
+        </code></pre>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Algorithm Flow:</strong></p>
+        <ol>
+            <li>Initialize in state <span class="math">S</span>, choose action <span class="math">A</span> using ε-greedy</li>
+            <li>Take action <span class="math">A</span>, observe <span class="math">R, S'</span></li>
+            <li>Choose <span class="math">A'</span> from <span class="math">S'</span> using ε-greedy</li>
+            <li>Update: <span class="math">Q(S,A) \leftarrow Q(S,A) + \alpha[R + \gamma Q(S',A') - Q(S,A)]</span></li>
+            <li>Set <span class="math">S \leftarrow S'</span>, <span class="math">A \leftarrow A'</span></li>
+            <li>Repeat from step 2 until terminal</li>
+        </ol>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>The critical difference in implementation:</strong>
+        </p>
+        <p>
+            In Q-Learning, we can update Q immediately after observing <span class="math">(s, a, r, s')</span>
+            because the update uses <span class="math">\max_a Q(s',a)</span>.
+        </p>
+        <p>
+            In SARSA, we must <em>first select</em> <span class="math">a'</span> using our policy,
+            <em>then</em> use it in the update. This means we need the full SARSA tuple before updating.
+        </p>
+        <p>
+            <strong>Why "the action carries over":</strong> Notice that <code>action = next_action</code>
+            at the end of each loop iteration. The action we selected for the update becomes the action
+            we actually take in the next step. This ensures consistency — we're learning about the
+            policy we're following.
+        </p>
+        <p>
+            <strong>Convergence:</strong> SARSA converges to the optimal policy under GLIE conditions
+            (Greedy in the Limit with Infinite Exploration): all state-action pairs are visited
+            infinitely often, and the policy converges to greedy (ε → 0).
+        </p>
+    </div>
+</div>

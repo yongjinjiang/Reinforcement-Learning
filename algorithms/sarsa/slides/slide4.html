@@ -1,0 +1,153 @@
+<div class="slide-content">
+    <h3>Slide 4: Expected SARSA</h3>
+
+    <h4>Reducing Variance with Expectations</h4>
+    <p>
+        <strong>Expected SARSA</strong> is a variant that takes the <em>expectation</em> over
+        possible next actions instead of using the single sampled action. This reduces variance
+        while maintaining the benefits of on-policy learning.
+    </p>
+
+    <div class="math-box">
+        <p><strong>Expected SARSA Update Rule:</strong></p>
+        <div class="math-display">
+            Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \sum_a \pi(a|S_{t+1}) Q(S_{t+1}, a) - Q(S_t, A_t) \right]
+        </div>
+        <p class="math-note">
+            Instead of using <span class="math">Q(S_{t+1}, A_{t+1})</span> for a single sampled action,
+            we use the expected value over all possible actions weighted by their probability under
+            the policy <span class="math">\pi</span>.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>For ε-Greedy Policy:</strong></p>
+        <div class="math-display">
+            \mathbb{E}_\pi[Q(S_{t+1}, A)] = (1-\epsilon) \max_a Q(S_{t+1}, a) + \frac{\epsilon}{|A|} \sum_a Q(S_{t+1}, a)
+        </div>
+        <p class="math-note">
+            The greedy action gets probability <span class="math">(1-\epsilon + \epsilon/|A|)</span>,
+            other actions get <span class="math">\epsilon/|A|</span> each.
+        </p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Comparison of TD Targets:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.5rem;">Algorithm</th>
+                <th style="text-align: left; padding: 0.5rem;">TD Target</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">SARSA</td>
+                <td style="padding: 0.5rem;"><span class="math">R + \gamma Q(S', A')</span></td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Expected SARSA</td>
+                <td style="padding: 0.5rem;"><span class="math">R + \gamma \sum_a \pi(a|S') Q(S', a)</span></td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;">Q-Learning</td>
+                <td style="padding: 0.5rem;"><span class="math">R + \gamma \max_a Q(S', a)</span></td>
+            </tr>
+        </table>
+        <p class="math-note">
+            Notice: Q-Learning is Expected SARSA with a greedy target policy (ε=0)!
+        </p>
+    </div>
+
+    <div class="algorithm-box">
+        <p><strong>Expected SARSA Implementation:</strong></p>
+        <pre><code class="language-python">
+def expected_sarsa(env, alpha=0.1, gamma=0.99, epsilon=0.1, n_episodes=1000):
+    """
+    Expected SARSA: On-policy TD control with expected updates
+    """
+    Q = defaultdict(lambda: np.zeros(env.n_actions))
+
+    for episode in range(n_episodes):
+        state = env.reset()
+        done = False
+
+        while not done:
+            # Choose action using ε-greedy
+            if np.random.random() < epsilon:
+                action = np.random.randint(env.n_actions)
+            else:
+                action = np.argmax(Q[state])
+
+            next_state, reward, done = env.step(action)
+
+            # Expected SARSA: compute expected Q-value over policy
+            if done:
+                expected_q = 0
+            else:
+                # Probability of each action under ε-greedy
+                policy_probs = np.ones(env.n_actions) * epsilon / env.n_actions
+                best_action = np.argmax(Q[next_state])
+                policy_probs[best_action] += (1 - epsilon)
+
+                # Expected Q-value = sum of prob * Q for each action
+                expected_q = np.sum(policy_probs * Q[next_state])
+
+            # Update using expected value (not sampled action!)
+            td_target = reward + gamma * expected_q
+            td_error = td_target - Q[state][action]
+            Q[state][action] += alpha * td_error
+
+            state = next_state
+
+    return Q
+        </code></pre>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Advantages of Expected SARSA:</strong></p>
+        <ul>
+            <li><strong>Lower variance:</strong> Averages over actions instead of sampling one</li>
+            <li><strong>More stable learning:</strong> Updates are less noisy</li>
+            <li><strong>Unifies SARSA and Q-Learning:</strong> With ε=0 for target, it's Q-Learning</li>
+            <li><strong>No need for next action:</strong> Don't need to select <span class="math">A'</span> before updating</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Computational Cost:</strong></p>
+        <ul>
+            <li><strong>SARSA:</strong> <span class="math">O(1)</span> — just look up <span class="math">Q(s',a')</span></li>
+            <li><strong>Expected SARSA:</strong> <span class="math">O(|A|)</span> — sum over all actions</li>
+            <li><strong>Q-Learning:</strong> <span class="math">O(|A|)</span> — max over all actions</li>
+        </ul>
+        <p class="math-note">
+            In practice, for small action spaces, the computational difference is negligible.
+        </p>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why Expected SARSA is often preferred:</strong>
+        </p>
+        <ul>
+            <li>Same computational cost as Q-Learning</li>
+            <li>More stable than regular SARSA (lower variance)</li>
+            <li>Can smoothly interpolate between on-policy (SARSA) and off-policy (Q-Learning) by varying the target policy</li>
+        </ul>
+        <p>
+            <strong>The variance reduction intuition:</strong> Regular SARSA samples one action
+            <span class="math">A'</span> which might be random (with prob ε). Expected SARSA
+            "averages out" this randomness analytically. Over many updates, they converge to
+            the same thing, but Expected SARSA gets there with less noise.
+        </p>
+        <p>
+            <strong>Interesting insight:</strong> You can use Expected SARSA with a <em>different</em>
+            target policy than the behavior policy. If the target policy is greedy, you get Q-Learning.
+            This shows Q-Learning is really just Expected SARSA with a greedy target!
+        </p>
+        <p>
+            <strong>In practice:</strong> Expected SARSA often performs as well as or better than
+            both SARSA and Q-Learning, combining the best of both: stability of expectations with
+            the flexibility to choose your target policy.
+        </p>
+    </div>
+</div>

@@ -1,0 +1,380 @@
+<div class="slide-content">
+    <h3>Slide 5: Interactive Demo — Cliff Walking</h3>
+
+    <h4>Compare SARSA vs Q-Learning</h4>
+    <p>Run the code below to see how SARSA and Q-Learning behave differently on the cliff walking problem:</p>
+
+    <!-- PyScript Code Section -->
+    <div class="code-demo">
+        <h4>📝 Python Implementation</h4>
+        <div class="code-container">
+            <pre><code class="language-python" id="sarsa-code">import numpy as np
+from js import document
+
+# Cliff Walking Environment
+class CliffWalking:
+    """
+    Cliff Walking: Navigate from S to G without falling off cliff.
+    Grid: 4 rows x 12 columns
+    Start (S): bottom-left, Goal (G): bottom-right
+    Cliff (C): bottom row between S and G
+    """
+    def __init__(self):
+        self.rows, self.cols = 4, 12
+        self.n_states = self.rows * self.cols
+        self.n_actions = 4  # Up, Right, Down, Left
+        self.start = (3, 0)  # Bottom-left
+        self.goal = (3, 11)  # Bottom-right
+        self.cliff = [(3, c) for c in range(1, 11)]  # Bottom row (except S and G)
+        self.state = self.start
+
+    def reset(self):
+        self.state = self.start
+        return self._get_state_idx()
+
+    def _get_state_idx(self):
+        return self.state[0] * self.cols + self.state[1]
+
+    def step(self, action):
+        row, col = self.state
+        if action == 0 and row > 0: row -= 1      # Up
+        elif action == 1 and col < 11: col += 1   # Right
+        elif action == 2 and row < 3: row += 1    # Down
+        elif action == 3 and col > 0: col -= 1    # Left
+
+        self.state = (row, col)
+
+        if self.state in self.cliff:
+            self.state = self.start  # Fall! Back to start
+            return self._get_state_idx(), -100, False
+
+        done = (self.state == self.goal)
+        reward = -1  # Step penalty
+        return self._get_state_idx(), reward, done
+
+
+def epsilon_greedy(Q, state, n_actions, epsilon):
+    if np.random.random() < epsilon:
+        return np.random.randint(n_actions)
+    return np.argmax(Q[state])
+
+
+def run_experiment(n_episodes=500):
+    env = CliffWalking()
+    alpha, gamma, epsilon = 0.1, 1.0, 0.1
+
+    # Initialize Q-tables
+    Q_sarsa = np.zeros((env.n_states, env.n_actions))
+    Q_qlearning = np.zeros((env.n_states, env.n_actions))
+
+    rewards_sarsa, rewards_qlearning = [], []
+
+    for ep in range(n_episodes):
+        # --- SARSA ---
+        state = env.reset()
+        action = epsilon_greedy(Q_sarsa, state, env.n_actions, epsilon)
+        total_sarsa = 0
+
+        while True:
+            next_state, reward, done = env.step(action)
+            next_action = epsilon_greedy(Q_sarsa, next_state, env.n_actions, epsilon)
+            # SARSA update
+            td_target = reward + gamma * Q_sarsa[next_state, next_action] * (1 - done)
+            Q_sarsa[state, action] += alpha * (td_target - Q_sarsa[state, action])
+            state, action = next_state, next_action
+            total_sarsa += reward
+            if done: break
+
+        rewards_sarsa.append(total_sarsa)
+
+        # --- Q-Learning ---
+        env.reset()
+        state = env._get_state_idx()
+        total_ql = 0
+
+        while True:
+            action = epsilon_greedy(Q_qlearning, state, env.n_actions, epsilon)
+            next_state, reward, done = env.step(action)
+            # Q-Learning update
+            td_target = reward + gamma * np.max(Q_qlearning[next_state]) * (1 - done)
+            Q_qlearning[state, action] += alpha * (td_target - Q_qlearning[state, action])
+            state = next_state
+            total_ql += reward
+            if done: break
+
+        rewards_qlearning.append(total_ql)
+
+    # Results
+    output = "CLIFF WALKING: SARSA vs Q-LEARNING\n"
+    output += "=" * 50 + "\n"
+    output += f"Episodes: {n_episodes}, ε={epsilon}, α={alpha}, γ={gamma}\n"
+    output += "=" * 50 + "\n\n"
+
+    # Average rewards
+    output += "Average Reward per Episode:\n"
+    output += f"  SARSA:      {np.mean(rewards_sarsa):.1f}\n"
+    output += f"  Q-Learning: {np.mean(rewards_qlearning):.1f}\n\n"
+
+    # Last 50 episodes
+    output += "Last 50 Episodes Average:\n"
+    output += f"  SARSA:      {np.mean(rewards_sarsa[-50:]):.1f}\n"
+    output += f"  Q-Learning: {np.mean(rewards_qlearning[-50:]):.1f}\n\n"
+
+    # Show learned policies
+    arrows = ['↑', '→', '↓', '←']
+
+    output += "=" * 50 + "\n"
+    output += "SARSA Learned Policy (Safe Path):\n"
+    for row in range(4):
+        line = "  "
+        for col in range(12):
+            state = row * 12 + col
+            if (row, col) == (3, 0): line += " S "
+            elif (row, col) == (3, 11): line += " G "
+            elif (row, col) in [(3, c) for c in range(1, 11)]: line += " C "
+            else: line += f" {arrows[np.argmax(Q_sarsa[state])]} "
+        output += line + "\n"
+
+    output += "\nQ-Learning Learned Policy (Optimal Path):\n"
+    for row in range(4):
+        line = "  "
+        for col in range(12):
+            state = row * 12 + col
+            if (row, col) == (3, 0): line += " S "
+            elif (row, col) == (3, 11): line += " G "
+            elif (row, col) in [(3, c) for c in range(1, 11)]: line += " C "
+            else: line += f" {arrows[np.argmax(Q_qlearning[state])]} "
+        output += line + "\n"
+
+    output += "\n" + "=" * 50 + "\n"
+    output += "Key Observations:\n"
+    output += "• SARSA learns a SAFER path (avoids cliff edge)\n"
+    output += "• Q-Learning learns OPTIMAL path (along cliff)\n"
+    output += "• SARSA has HIGHER reward during training\n"
+    output += "• Q-Learning path is shorter but riskier\n"
+    output += "\nS=Start, G=Goal, C=Cliff (fall = -100)\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+# Auto-run
+run_experiment()
+</code></pre>
+        </div>
+
+        <div class="run-section">
+            <button id="run-code" onclick="if(window.runPythonExperiment){window.runPythonExperiment()}else{alert('Python not ready. Please wait.')}">▶ Run Experiment</button>
+            <div id="output" class="output-box">Loading Python environment...</div>
+        </div>
+
+        <!-- PyScript block -->
+        <script type="py">
+from js import document
+print("📦 Loading SARSA simulation...")
+
+try:
+    import numpy as np
+    print("✅ NumPy loaded!")
+except ImportError as e:
+    print(f"❌ NumPy not available: {e}")
+
+# Cliff Walking Environment
+class CliffWalking:
+    def __init__(self):
+        self.rows, self.cols = 4, 12
+        self.n_states = self.rows * self.cols
+        self.n_actions = 4
+        self.start = (3, 0)
+        self.goal = (3, 11)
+        self.cliff = [(3, c) for c in range(1, 11)]
+        self.state = self.start
+
+    def reset(self):
+        self.state = self.start
+        return self._get_state_idx()
+
+    def _get_state_idx(self):
+        return self.state[0] * self.cols + self.state[1]
+
+    def step(self, action):
+        row, col = self.state
+        if action == 0 and row > 0: row -= 1
+        elif action == 1 and col < 11: col += 1
+        elif action == 2 and row < 3: row += 1
+        elif action == 3 and col > 0: col -= 1
+
+        self.state = (row, col)
+
+        if self.state in self.cliff:
+            self.state = self.start
+            return self._get_state_idx(), -100, False
+
+        done = (self.state == self.goal)
+        return self._get_state_idx(), -1, done
+
+
+def epsilon_greedy(Q, state, n_actions, epsilon):
+    if np.random.random() < epsilon:
+        return np.random.randint(n_actions)
+    return np.argmax(Q[state])
+
+
+def run_experiment(n_episodes=500):
+    print(f"🔄 Running {n_episodes} episodes...")
+    document.getElementById("output").innerText = "Running experiment..."
+
+    env = CliffWalking()
+    alpha, gamma, epsilon = 0.1, 1.0, 0.1
+
+    Q_sarsa = np.zeros((env.n_states, env.n_actions))
+    Q_qlearning = np.zeros((env.n_states, env.n_actions))
+
+    rewards_sarsa, rewards_qlearning = [], []
+
+    for ep in range(n_episodes):
+        # SARSA
+        state = env.reset()
+        action = epsilon_greedy(Q_sarsa, state, env.n_actions, epsilon)
+        total_sarsa = 0
+
+        while True:
+            next_state, reward, done = env.step(action)
+            next_action = epsilon_greedy(Q_sarsa, next_state, env.n_actions, epsilon)
+            td_target = reward + gamma * Q_sarsa[next_state, next_action] * (1 - done)
+            Q_sarsa[state, action] += alpha * (td_target - Q_sarsa[state, action])
+            state, action = next_state, next_action
+            total_sarsa += reward
+            if done: break
+
+        rewards_sarsa.append(total_sarsa)
+
+        # Q-Learning
+        env.reset()
+        state = env._get_state_idx()
+        total_ql = 0
+
+        while True:
+            action = epsilon_greedy(Q_qlearning, state, env.n_actions, epsilon)
+            next_state, reward, done = env.step(action)
+            td_target = reward + gamma * np.max(Q_qlearning[next_state]) * (1 - done)
+            Q_qlearning[state, action] += alpha * (td_target - Q_qlearning[state, action])
+            state = next_state
+            total_ql += reward
+            if done: break
+
+        rewards_qlearning.append(total_ql)
+
+    arrows = ['↑', '→', '↓', '←']
+
+    output = "CLIFF WALKING: SARSA vs Q-LEARNING\n"
+    output += "=" * 50 + "\n"
+    output += f"Episodes: {n_episodes}, ε={epsilon}, α={alpha}, γ={gamma}\n"
+    output += "=" * 50 + "\n\n"
+
+    output += "Average Reward per Episode:\n"
+    output += f"  SARSA:      {np.mean(rewards_sarsa):.1f}\n"
+    output += f"  Q-Learning: {np.mean(rewards_qlearning):.1f}\n\n"
+
+    output += "Last 50 Episodes Average:\n"
+    output += f"  SARSA:      {np.mean(rewards_sarsa[-50:]):.1f}\n"
+    output += f"  Q-Learning: {np.mean(rewards_qlearning[-50:]):.1f}\n\n"
+
+    output += "=" * 50 + "\n"
+    output += "SARSA Learned Policy (Safe Path):\n"
+    for row in range(4):
+        line = "  "
+        for col in range(12):
+            state = row * 12 + col
+            if (row, col) == (3, 0): line += " S "
+            elif (row, col) == (3, 11): line += " G "
+            elif (row, col) in [(3, c) for c in range(1, 11)]: line += " C "
+            else: line += f" {arrows[np.argmax(Q_sarsa[state])]} "
+        output += line + "\n"
+
+    output += "\nQ-Learning Learned Policy (Optimal Path):\n"
+    for row in range(4):
+        line = "  "
+        for col in range(12):
+            state = row * 12 + col
+            if (row, col) == (3, 0): line += " S "
+            elif (row, col) == (3, 11): line += " G "
+            elif (row, col) in [(3, c) for c in range(1, 11)]: line += " C "
+            else: line += f" {arrows[np.argmax(Q_qlearning[state])]} "
+        output += line + "\n"
+
+    output += "\n" + "=" * 50 + "\n"
+    output += "Key Observations:\n"
+    output += "• SARSA learns a SAFER path (avoids cliff edge)\n"
+    output += "• Q-Learning learns OPTIMAL path (along cliff)\n"
+    output += "• SARSA has HIGHER reward during training\n"
+    output += "• Q-Learning path is shorter but riskier\n"
+    output += "\nS=Start, G=Goal, C=Cliff (fall = -100)\n"
+
+    document.getElementById("output").innerText = output
+    print("✅ Experiment completed!")
+
+
+print("🎮 Running initial experiment...")
+try:
+    run_experiment()
+except Exception as e:
+    document.getElementById("output").innerText = f"Error: {str(e)}"
+    print(f"❌ Error: {e}")
+    import traceback
+    traceback.print_exc()
+
+from pyodide.ffi import create_proxy
+from js import window
+
+js_run_experiment = create_proxy(run_experiment)
+window.runPythonExperiment = js_run_experiment
+
+print("✨ Ready! Click 'Run Experiment' to run again.")
+        </script>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Understanding the Results:</strong></p>
+        <ul>
+            <li><strong>SARSA policy:</strong> Arrows typically go UP first, then RIGHT along the top, then DOWN to goal — avoiding the cliff entirely</li>
+            <li><strong>Q-Learning policy:</strong> Arrows go RIGHT along row 2 (just above cliff), then DOWN — the shortest path</li>
+            <li><strong>Average reward:</strong> SARSA usually has higher average reward because it falls less during training</li>
+            <li><strong>Optimal vs Safe:</strong> Q-Learning's path is 13 steps; SARSA's safe path is ~17 steps</li>
+        </ul>
+    </div>
+
+    <div class="learning-note">
+        <h4>🔬 Experiment & Learn</h4>
+        <p>
+            <strong>Try modifying the parameters:</strong>
+        </p>
+        <ul>
+            <li>Increase <code>epsilon</code> to 0.3 — SARSA becomes even more cautious!</li>
+            <li>Decrease <code>epsilon</code> to 0.01 — policies become more similar</li>
+            <li>Try <code>gamma=0.9</code> — less far-sighted, may change behavior</li>
+            <li>Run more episodes (1000+) — policies stabilize more</li>
+        </ul>
+
+        <p>
+            <strong>Key insight from the demo:</strong>
+        </p>
+        <p>
+            The reason SARSA learns a "safe" path is because when it's near the cliff,
+            its ε-greedy exploration sometimes chooses "down" (into the cliff), giving -100.
+            This gets factored into the Q-values for states near the cliff, making them lower.
+            SARSA essentially learns: "states near the cliff are dangerous <em>because I sometimes
+            explore randomly</em>."
+        </p>
+        <p>
+            Q-Learning ignores this — it always assumes the next action will be optimal (max),
+            so it doesn't "see" the danger of being near the cliff with an exploratory policy.
+        </p>
+
+        <p>
+            <strong>When ε → 0:</strong> If you reduce epsilon over time (as is common in practice),
+            both algorithms will eventually converge to the same optimal policy. The difference
+            is in what happens <em>during</em> learning.
+        </p>
+    </div>
+</div>

@@ -1,0 +1,102 @@
+<div class="slide-content">
+    <h3>Slide 1: On-Policy vs Off-Policy Learning</h3>
+
+    <h4>Two Approaches to TD Control</h4>
+    <p>
+        TD control algorithms learn action-value functions <span class="math">Q(s,a)</span> to find
+        optimal policies. The key distinction is whether they learn about the <strong>behavior policy</strong>
+        (the policy actually being followed) or a different <strong>target policy</strong>.
+    </p>
+
+    <div class="math-box">
+        <p><strong>Key Definitions:</strong></p>
+        <ul>
+            <li><strong>Behavior Policy <span class="math">b(a|s)</span>:</strong> The policy used to select actions and generate experience</li>
+            <li><strong>Target Policy <span class="math">\pi(a|s)</span>:</strong> The policy being learned/improved</li>
+        </ul>
+    </div>
+
+    <div class="math-box">
+        <p><strong>On-Policy Learning:</strong></p>
+        <p class="math-note">The target policy <em>is</em> the behavior policy: <span class="math">\pi = b</span></p>
+        <ul>
+            <li>Learn about the policy you're actually following</li>
+            <li>If you explore with ε-greedy, you learn the ε-greedy policy (not the greedy one)</li>
+            <li>Example: <strong>SARSA</strong></li>
+        </ul>
+        <div class="math-display">
+            Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma Q(S_{t+1}, A_{t+1}) - Q(S_t, A_t) \right]
+        </div>
+        <p class="math-note">Uses <span class="math">A_{t+1}</span> — the action actually taken next</p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Off-Policy Learning:</strong></p>
+        <p class="math-note">The target policy differs from the behavior policy: <span class="math">\pi \neq b</span></p>
+        <ul>
+            <li>Learn about a different policy than the one generating data</li>
+            <li>Typically: explore with ε-greedy, but learn the greedy policy</li>
+            <li>Example: <strong>Q-Learning</strong></li>
+        </ul>
+        <div class="math-display">
+            Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \alpha \left[ R_{t+1} + \gamma \max_a Q(S_{t+1}, a) - Q(S_t, A_t) \right]
+        </div>
+        <p class="math-note">Uses <span class="math">\max_a Q(S_{t+1}, a)</span> — the best action, regardless of what's taken</p>
+    </div>
+
+    <div class="math-box">
+        <p><strong>Comparison Table:</strong></p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 0.5rem;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="text-align: left; padding: 0.5rem;">Property</th>
+                <th style="text-align: left; padding: 0.5rem;">On-Policy (SARSA)</th>
+                <th style="text-align: left; padding: 0.5rem;">Off-Policy (Q-Learning)</th>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Learns about</td>
+                <td style="padding: 0.5rem;">Behavior policy (with exploration)</td>
+                <td style="padding: 0.5rem;">Optimal greedy policy</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">TD target uses</td>
+                <td style="padding: 0.5rem;"><span class="math">Q(s', a')</span> (actual next action)</td>
+                <td style="padding: 0.5rem;"><span class="math">\max_a Q(s', a)</span> (best action)</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 0.5rem;">Experience reuse</td>
+                <td style="padding: 0.5rem;">Limited (data must be on-policy)</td>
+                <td style="padding: 0.5rem;">High (can use any data)</td>
+            </tr>
+            <tr>
+                <td style="padding: 0.5rem;">Safety during learning</td>
+                <td style="padding: 0.5rem;">Safer (accounts for exploration)</td>
+                <td style="padding: 0.5rem;">May take risky paths</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="learning-note">
+        <h4>🤔 My Learning Notes</h4>
+        <p>
+            <strong>Why does on-policy vs off-policy matter?</strong>
+        </p>
+        <p>
+            The difference becomes crucial when exploration can be dangerous. Consider a cliff-walking
+            problem: an agent must navigate along a cliff edge. Q-Learning learns the optimal (shortest)
+            path right along the cliff, but during learning with ε-greedy exploration, random actions
+            cause falls. SARSA learns a safer path away from the cliff because it accounts for the
+            fact that exploration will sometimes cause random moves.
+        </p>
+        <p>
+            <strong>The fundamental tradeoff:</strong>
+        </p>
+        <ul>
+            <li><strong>Q-Learning:</strong> Learns the theoretically optimal policy, but may suffer during training</li>
+            <li><strong>SARSA:</strong> Learns a policy that's good <em>given that you'll sometimes explore</em></li>
+        </ul>
+        <p>
+            <strong>When ε → 0:</strong> If exploration decays to zero, both algorithms converge to the
+            same optimal policy. The difference is in their behavior <em>during</em> learning.
+        </p>
+    </div>
+</div>
